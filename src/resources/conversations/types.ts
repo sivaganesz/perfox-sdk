@@ -3,9 +3,9 @@ import type { PageMetadata } from "../../types/pagination.js";
 
 /**
  * Conversation status. The schema types it as a string and documents
- * `active | resolved | escalated | abandoned`; other endpoints also report `ended`.
+ * `active | ended | resolved | escalated | abandoned`.
  */
-export type ConversationStatus = OpenEnum<"active" | "resolved" | "escalated" | "abandoned">;
+export type ConversationStatus = OpenEnum<"active" | "ended" | "resolved" | "escalated" | "abandoned">;
 
 /** A conversation. */
 export interface Conversation {

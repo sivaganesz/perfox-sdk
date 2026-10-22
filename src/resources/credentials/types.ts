@@ -38,7 +38,8 @@ export type CredentialType =
   | "meta_whatsapp"
   | "custom"
   | "google_speech"
-  | "mcp_oauth";
+  | "mcp_oauth"
+  | "app_platform_key";
 
 /** `connected | error | not_configured | pending_verification`. */
 export type CredentialStatus = OpenEnum<"connected" | "error" | "not_configured" | "pending_verification">;

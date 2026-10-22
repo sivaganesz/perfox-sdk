@@ -26,9 +26,7 @@ if (!response.ok) {
   console.error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
   process.exit(1);
 }
-// Stored verbatim: the snapshot is the source of truth for the SDK contract.
-const raw = await response.text();
-const next = JSON.parse(raw);
+const next = await response.json();
 
 const operations = (spec) =>
   new Set(
@@ -51,7 +49,9 @@ const after = operations(next);
 const added = [...after].filter((o) => !before.has(o));
 const removed = [...before].filter((o) => !after.has(o));
 
-writeFileSync(specPath, raw);
+// Content is stored unchanged, pretty-printed with 4-space indentation so that
+// spec changes show up as readable line diffs in review.
+writeFileSync(specPath, JSON.stringify(next, null, 4));
 console.log(`Wrote ${specPath} (OpenAPI ${next.openapi}, API ${next.info?.version}).`);
 console.log(added.length ? `Added operations:\n  ${added.join("\n  ")}` : "No operations added.");
 console.log(removed.length ? `Removed operations:\n  ${removed.join("\n  ")}` : "No operations removed.");

@@ -2135,7 +2135,7 @@ export interface operations {
                             id: string;
                             customer_id: string;
                             workflow_id?: string;
-                            /** @description active | resolved | escalated | abandoned */
+                            /** @description active | ended | resolved | escalated | abandoned */
                             status: string;
                             channel_started?: string;
                             channels: string[];
@@ -2532,7 +2532,7 @@ export interface operations {
                             id: string;
                             customer_id: string;
                             workflow_id?: string;
-                            /** @description active | resolved | escalated | abandoned */
+                            /** @description active | ended | resolved | escalated | abandoned */
                             status: string;
                             channel_started?: string;
                             channels: string[];
@@ -2713,7 +2713,7 @@ export interface operations {
                         id: string;
                         customer_id: string;
                         workflow_id?: string;
-                        /** @description active | resolved | escalated | abandoned */
+                        /** @description active | ended | resolved | escalated | abandoned */
                         status: string;
                         channel_started?: string;
                         channels: string[];
@@ -3753,7 +3753,7 @@ export interface operations {
                 "application/json": {
                     name: string;
                     /** @enum {string} */
-                    type: "exotel" | "gemini" | "openai" | "sarvam" | "anthropic" | "groq" | "elevenlabs" | "zilliz" | "resend" | "do_spaces" | "slack" | "jira" | "freshdesk" | "google_sheets" | "salesforce" | "hubspot" | "livekit" | "twilio" | "plivo" | "aws_ses" | "sendgrid" | "postmark" | "mailjet" | "mailgun" | "gmail" | "smtp_imap" | "office365_email" | "postgres" | "mysql" | "mongodb_external" | "aws_s3" | "office365" | "google_drive" | "meta_whatsapp" | "custom" | "google_speech" | "mcp_oauth";
+                    type: "exotel" | "gemini" | "openai" | "sarvam" | "anthropic" | "groq" | "elevenlabs" | "zilliz" | "resend" | "do_spaces" | "slack" | "jira" | "freshdesk" | "google_sheets" | "salesforce" | "hubspot" | "livekit" | "twilio" | "plivo" | "aws_ses" | "sendgrid" | "postmark" | "mailjet" | "mailgun" | "gmail" | "smtp_imap" | "office365_email" | "postgres" | "mysql" | "mongodb_external" | "aws_s3" | "office365" | "google_drive" | "meta_whatsapp" | "custom" | "google_speech" | "mcp_oauth" | "app_platform_key";
                     /** @default  */
                     description?: string;
                     config: {

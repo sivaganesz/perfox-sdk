@@ -174,8 +174,8 @@ Differences between the live documentation and the snapshot the SDK was built fr
 
 | Detected | Operation(s) | Change | Handling | Status |
 |---|---|---|---|---|
-| 2026-10-22 | `customers.conversations`, `conversations.list`, `conversations.get` | Conversation `status` description now lists `ended` (`active \| ended \| resolved \| escalated \| abandoned`). | Add `"ended"` to `ConversationStatus`. Closes gap G3 in the implementation plan. | ⏳ |
-| 2026-10-22 | `credentials.register` | Request `type` enum gained `app_platform_key`. | Add it to `CredentialType`. | ⏳ |
+| 2026-10-22 | `customers.conversations`, `conversations.list`, `conversations.get` | Conversation `status` description now lists `ended` (`active \| ended \| resolved \| escalated \| abandoned`). | Added `"ended"` to `ConversationStatus`. Closes gap G3 in the implementation plan. | ✅ |
+| 2026-10-22 | `credentials.register` | Request `type` enum gained `app_platform_key`. | Added to `CredentialType` (the type-level contract test caught this drift). | ✅ |
 
 ## 4. Decisions and documentation gaps
 
@@ -211,7 +211,8 @@ Gaps in the first 10 categories are listed in [`implementation-plan.md`](./imple
 | Date | Branch | Commit | Change | Tests |
 |---|---|---|---|---|
 | 2026-10-07 | `master` | `b5aac74` | v0.1.0: 10 categories, 44 operations. | 292 passed |
-| 2026-10-22 | `feat/remaining-api-categories` | — | Analysis approved; branch and this tracker created. | — |
+| 2026-10-22 | `feat/remaining-api-categories` | `20b60c2` | Analysis approved; branch and this tracker created. | — |
+| 2026-10-22 | `feat/remaining-api-categories` | _API changes_ | Spec snapshot refreshed; `ended` status and `app_platform_key` credential type added. | 292 passed |
 
 ## 6. How to update
 

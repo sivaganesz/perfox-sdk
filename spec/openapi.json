@@ -3186,7 +3186,7 @@
                                                     },
                                                     "status": {
                                                         "type": "string",
-                                                        "description": "active | resolved | escalated | abandoned"
+                                                        "description": "active | ended | resolved | escalated | abandoned"
                                                     },
                                                     "channel_started": {
                                                         "type": "string"
@@ -4006,7 +4006,7 @@
                                                     },
                                                     "status": {
                                                         "type": "string",
-                                                        "description": "active | resolved | escalated | abandoned"
+                                                        "description": "active | ended | resolved | escalated | abandoned"
                                                     },
                                                     "channel_started": {
                                                         "type": "string"
@@ -4434,7 +4434,7 @@
                                         },
                                         "status": {
                                             "type": "string",
-                                            "description": "active | resolved | escalated | abandoned"
+                                            "description": "active | ended | resolved | escalated | abandoned"
                                         },
                                         "channel_started": {
                                             "type": "string"
@@ -6614,7 +6614,8 @@
                                             "meta_whatsapp",
                                             "custom",
                                             "google_speech",
-                                            "mcp_oauth"
+                                            "mcp_oauth",
+                                            "app_platform_key"
                                         ]
                                     },
                                     "description": {

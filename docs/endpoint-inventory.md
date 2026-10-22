@@ -301,7 +301,7 @@ _None documented._
 | `conversations[].id` | string | yes | no |  |  |
 | `conversations[].customer_id` | string | yes | no |  |  |
 | `conversations[].workflow_id` | string | no | no |  |  |
-| `conversations[].status` | string | yes | no |  | active \| resolved \| escalated \| abandoned |
+| `conversations[].status` | string | yes | no |  | active \| ended \| resolved \| escalated \| abandoned |
 | `conversations[].channel_started` | string | no | no |  |  |
 | `conversations[].channels` | string[] | yes | no |  |  |
 | `conversations[].summary` | string | no | no |  |  |
@@ -469,7 +469,7 @@ _None documented._
 | `data[].id` | string | yes | no |  |  |
 | `data[].customer_id` | string | yes | no |  |  |
 | `data[].workflow_id` | string | no | no |  |  |
-| `data[].status` | string | yes | no |  | active \| resolved \| escalated \| abandoned |
+| `data[].status` | string | yes | no |  | active \| ended \| resolved \| escalated \| abandoned |
 | `data[].channel_started` | string | no | no |  |  |
 | `data[].channels` | string[] | yes | no |  |  |
 | `data[].summary` | string | no | no |  |  |
@@ -553,7 +553,7 @@ _None documented._
 | `id` | string | yes | no |  |  |
 | `customer_id` | string | yes | no |  |  |
 | `workflow_id` | string | no | no |  |  |
-| `status` | string | yes | no |  | active \| resolved \| escalated \| abandoned |
+| `status` | string | yes | no |  | active \| ended \| resolved \| escalated \| abandoned |
 | `channel_started` | string | no | no |  |  |
 | `channels` | string[] | yes | no |  |  |
 | `summary` | string | no | no |  |  |
@@ -951,7 +951,7 @@ _None documented._
 | Field | Type | Required | Nullable | Constraints | Description |
 |---|---|---|---|---|---|
 | `name` | string | yes | no | minLength 1; maxLength 200 |  |
-| `type` | string | yes | no | enum: `"exotel"`, `"gemini"`, `"openai"`, `"sarvam"`, `"anthropic"`, `"groq"`, `"elevenlabs"`, `"zilliz"`, `"resend"`, `"do_spaces"`, `"slack"`, `"jira"`, `"freshdesk"`, `"google_sheets"`, `"salesforce"`, `"hubspot"`, `"livekit"`, `"twilio"`, `"plivo"`, `"aws_ses"`, `"sendgrid"`, `"postmark"`, `"mailjet"`, `"mailgun"`, `"gmail"`, `"smtp_imap"`, `"office365_email"`, `"postgres"`, `"mysql"`, `"mongodb_external"`, `"aws_s3"`, `"office365"`, `"google_drive"`, `"meta_whatsapp"`, `"custom"`, `"google_speech"`, `"mcp_oauth"` |  |
+| `type` | string | yes | no | enum: `"exotel"`, `"gemini"`, `"openai"`, `"sarvam"`, `"anthropic"`, `"groq"`, `"elevenlabs"`, `"zilliz"`, `"resend"`, `"do_spaces"`, `"slack"`, `"jira"`, `"freshdesk"`, `"google_sheets"`, `"salesforce"`, `"hubspot"`, `"livekit"`, `"twilio"`, `"plivo"`, `"aws_ses"`, `"sendgrid"`, `"postmark"`, `"mailjet"`, `"mailgun"`, `"gmail"`, `"smtp_imap"`, `"office365_email"`, `"postgres"`, `"mysql"`, `"mongodb_external"`, `"aws_s3"`, `"office365"`, `"google_drive"`, `"meta_whatsapp"`, `"custom"`, `"google_speech"`, `"mcp_oauth"`, `"app_platform_key"` |  |
 | `description` | string | no | no | default: "" |  |
 | `config` | map<string, any> | yes | no |  |  |
 
