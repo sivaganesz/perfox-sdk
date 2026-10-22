@@ -8,8 +8,12 @@ import {
   buildPath,
   ConflictError,
   PerfoxClient,
+  ValidationError,
   type RequestOptions,
 } from "../src/index.js";
+
+/** Stand-in for your secret store. */
+declare function saveSecretSomewhereSafe(secret: string): void;
 
 export async function main(workspace: string): Promise<void> {
   const perfox = new PerfoxClient({
@@ -72,6 +76,32 @@ export async function main(workspace: string): Promise<void> {
   }
   const first500 = await perfox.knowledgeBase.iterateFiles().toArray({ maxItems: 500 });
   console.log(first500.length);
+
+  // Agents
+  const agent = await perfox.agents.createFromSpec({
+    name: "Maya",
+    persona_name: "Maya",
+    role: "Support Agent",
+    system_prompt: "You help customers track and change their orders.",
+    channel: "whatsapp",
+  });
+  try {
+    await perfox.agents.publish(agent.id);
+  } catch (error) {
+    if (error instanceof ValidationError) console.error(error.body);
+  }
+
+  // Templates
+  const { templates } = await perfox.templates.list();
+  const sendable = templates.filter((t) => t.status === "approved");
+  console.log(sendable.length);
+
+  // Webhooks
+  const sub = await perfox.webhooks.create({
+    url: "https://example.com/perfox-hook",
+    events: ["message.inbound", "message.status"],
+  });
+  saveSecretSomewhereSafe(sub.secret);
 
   // Extending
   class Widgets extends APIResource {

@@ -1,5 +1,10 @@
 # Implementation Plan & Documentation Findings
 
+> **Scope update (v0.2.0, 2026-10-22):** this plan covers the original 10 categories (44
+> operations). The remaining 4 categories (Agents, Support, Templates, Webhooks; 18 operations)
+> were added in v0.2.0. Their plan, retry policy and documentation gaps are in
+> [`api-progress.md`](./api-progress.md), which is the current coverage tracker.
+
 Source of truth: `spec/openapi.json`, a snapshot of the OpenAPI document that backs the public
 docs page (`https://perfox.ai/api/v1/docs?workspace=<slug>` loads Scalar with
 `data-url="/api/v1/openapi.json?workspace=<slug>"`). The full per-endpoint contract is in

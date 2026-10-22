@@ -1,7 +1,7 @@
 {
   "name": "perfox-sdk",
-  "version": "0.1.0",
-  "description": "Official-style TypeScript SDK for the Perfox Platform API (Customers, Conversations, Knowledge Base, Credentials, MCP Servers, Analytics, Calls, Billing, Outbound, Messages).",
+  "version": "0.2.0",
+  "description": "TypeScript SDK for the Perfox Platform API: all 62 documented operations across 14 categories (customers, conversations, knowledge base, agents, messaging, webhooks and more).",
   "license": "UNLICENSED",
   "type": "module",
   "sideEffects": false,

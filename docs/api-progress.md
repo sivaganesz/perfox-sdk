@@ -216,7 +216,8 @@ Gaps in the first 10 categories are listed in [`implementation-plan.md`](./imple
 | 2026-10-22 | `feat/remaining-api-categories` | `d25b928` | Agents: 7 operations (`agents.*`). | 326 passed |
 | 2026-10-22 | `feat/remaining-api-categories` | `1a2f55b` | Support: 4 operations (`support.*`). | 344 passed |
 | 2026-10-22 | `feat/remaining-api-categories` | `f307148` | Templates: 2 operations (`templates.*`). | 353 passed |
-| 2026-10-22 | `feat/remaining-api-categories` | _Webhooks_ | Webhooks: 5 operations (`webhooks.*`). All 62 operations implemented. | 379 passed |
+| 2026-10-22 | `feat/remaining-api-categories` | `b91b66a` | Webhooks: 5 operations (`webhooks.*`). All 62 operations implemented. | 379 passed |
+| 2026-10-22 | `feat/remaining-api-categories` | _Release docs_ | v0.2.0: README, CHANGELOG, examples and version bump. | 379 passed |
 
 ## 6. How to update
 

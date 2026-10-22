@@ -2,13 +2,15 @@
 
 A strongly typed TypeScript SDK for the [Perfox Platform API](https://perfox.ai/api/v1/docs).
 
-It covers 10 API categories (44 operations): **Customers, Conversations, Knowledge Base,
-Credentials, MCP Servers, Analytics, Calls, Billing, Outbound and Messages**. The full,
-spec-generated endpoint inventory is in [`docs/endpoint-inventory.md`](docs/endpoint-inventory.md).
+It covers the whole documented API, 14 categories and 62 operations: **Customers, Conversations,
+Knowledge Base, Credentials, MCP Servers, Analytics, Calls, Billing, Outbound, Messages, Agents,
+Support, Templates and Webhooks**. The full, spec-generated endpoint inventory is in
+[`docs/endpoint-inventory.md`](docs/endpoint-inventory.md), and coverage is tracked in
+[`docs/api-progress.md`](docs/api-progress.md).
 
 - Zero runtime dependencies. Works on Node.js 18.17+, Bun, Deno and edge runtimes (uses global `fetch`).
 - ESM and CommonJS builds with bundled type declarations.
-- Request/response types are verified against the published OpenAPI spec in CI.
+- Request/response types are verified against the published OpenAPI spec by the test suite.
 - Timeouts, cancellation, safe automatic retries, typed errors, and auto-pagination.
 
 > This is a **server-to-server** API. Never ship your API key to a browser.
@@ -215,6 +217,83 @@ const sent = await perfox.messages.create({
 const message = await perfox.messages.get(sent.id);
 ```
 
+### Agents — `perfox.agents`
+
+| Method | Endpoint |
+|---|---|
+| `create(params)` | `POST /agents` — create a draft, with or without a node/edge graph |
+| `list()` | `GET /agents` |
+| `get(id)` | `GET /agents/{id}` — the agent with its graph |
+| `update(id, params)` | `PATCH /agents/{id}` — edit fields or replace the graph |
+| `publish(id)` | `POST /agents/{id}/publish` — take it live as a new version |
+| `createFromSpec(params)` | `POST /agents/from-spec` — build the standard graph from a compact spec |
+| `generate(params)` | `POST /agents/generate` — have the platform's LLM draft the agent from a description |
+
+```ts
+const agent = await perfox.agents.createFromSpec({
+  name: "Maya",
+  persona_name: "Maya",
+  role: "Support Agent",
+  system_prompt: "You help customers track and change their orders.",
+  channel: "whatsapp",
+});
+
+try {
+  await perfox.agents.publish(agent.id);
+} catch (error) {
+  if (error instanceof ValidationError) console.error(error.body); // node-tagged publish errors
+}
+```
+
+### Support — `perfox.support`
+
+| Method | Endpoint |
+|---|---|
+| `createTicket(params)` | `POST /support/tickets` — `category`: `forward_deployment` or `platform` |
+| `listTickets()` | `GET /support/tickets` |
+| `getTicket(id)` | `GET /support/tickets/{id}` — with the full message thread |
+| `replyToTicket(id, params)` | `POST /support/tickets/{id}/reply` — re-opens a resolved ticket |
+
+### Templates — `perfox.templates`
+
+| Method | Endpoint |
+|---|---|
+| `sync()` | `POST /templates/sync` — pull the latest templates from your WhatsApp providers |
+| `list({ number? })` | `GET /templates` — stored templates and what each one needs filled in |
+
+`list()` is served from the workspace's stored copy, so it is cheap. Only `status: "approved"`
+templates can be sent. `synced_at: null` means the workspace has never synced, and a missing
+`params` means the fill spec is unknown, not that nothing needs filling.
+
+```ts
+const { templates } = await perfox.templates.list();
+const sendable = templates.filter((t) => t.status === "approved");
+```
+
+### Webhooks — `perfox.webhooks`
+
+| Method | Endpoint |
+|---|---|
+| `create({ url, events })` | `POST /webhook-subscriptions` — returns the signing `secret` **once** |
+| `list()` | `GET /webhook-subscriptions` — with delivery health |
+| `update(id, params)` | `PATCH /webhook-subscriptions/{id}` — re-enable, or `rotate_secret: true` |
+| `delete(id)` | `DELETE /webhook-subscriptions/{id}` |
+| `test(id)` | `POST /webhook-subscriptions/{id}/test` — synchronous signed test delivery |
+
+```ts
+const sub = await perfox.webhooks.create({
+  url: "https://example.com/perfox-hook",
+  events: ["message.inbound", "message.status"],
+});
+saveSecretSomewhereSafe(sub.secret); // never returned again
+```
+
+Each delivery carries `X-Perfox-Signature: t=<unix>,v1=<hmac-sha256>`, computed over
+`<t>.<raw body>` with the subscription secret, plus a stable `X-Perfox-Delivery` id for
+idempotency. Verify the signature against the raw body before parsing it. The SDK does not ship a
+verification helper yet, because the docs don't specify the signature encoding or the timestamp
+tolerance (see [Known gaps](#known-gaps-in-the-api-documentation)).
+
 ## Pagination
 
 Cursor-paginated endpoints have a `list*` method that returns one page and an `iterate*` method
@@ -262,11 +341,17 @@ errors, timeouts, 408, 429 and 5xx (except 501), **and only for operations that 
 - `customers.create`, `customers.link` and `customers.linkBatch`, which the docs describe as idempotent;
 - `knowledgeBase.search`, which is read-only.
 
-Operations with side effects are **never retried automatically**: `messages.create`,
-`outbound.create`, `knowledgeBase.uploadFile`, `knowledgeBase.createFolder`/`moveFile`/`updateFolder`,
-`credentials.register`, `mcpServers.register`/`update`, and `customers.update`. The API documents no
-idempotency key, so a retry could send a message twice. To opt one call in deliberately,
-pass `{ maxRetries: n }` for that call.
+Operations with side effects are **never retried automatically**, because the API documents no
+idempotency key and a retry could, for example, send a message twice:
+
+- `messages.create`, `outbound.create`, `customers.update`;
+- `knowledgeBase.uploadFile`, `createFolder`, `moveFile`, `updateFolder`;
+- `credentials.register`, `mcpServers.register`, `mcpServers.update`;
+- `agents.create`, `update`, `publish`, `createFromSpec`, `generate`;
+- `support.createTicket`, `support.replyToTicket`, `templates.sync`;
+- `webhooks.create`, `webhooks.update`, `webhooks.test`.
+
+To opt one call in deliberately, pass `{ maxRetries: n }` for that call.
 
 ## Extending
 
@@ -301,8 +386,16 @@ The SDK implements exactly what the spec documents. Where the docs are silent, i
 - In the KB upload, `folder_id: null` ("root") has no documented multipart encoding, so the
   SDK omits the field for `null`.
 - Rate limits, `Retry-After`, and the status code used for schema-validation errors are not documented.
+- Webhook event payloads (`message.inbound`, `message.status`) have no documented schema, so they
+  are not typed. The signature's encoding (hex or base64) and timestamp tolerance aren't
+  documented either, which is why there is no verification helper.
+- `GET /agents` and `GET /support/tickets` document no pagination or filters, and
+  `GET /templates?number=` has no description.
+- The shape of the 422 "node-tagged validation errors" from `agents.publish` is undocumented.
+  It is available unchanged on `error.body`.
 
-See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the full list.
+See [`docs/implementation-plan.md`](docs/implementation-plan.md) and
+[`docs/api-progress.md`](docs/api-progress.md) for the full list.
 
 ## Development
 
