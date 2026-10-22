@@ -76,8 +76,10 @@
 | 53 | Support | GET | `/support/tickets` | `support.list_tickets` | `support:read` | `support.listTickets` | none | yes (GET) |
 | 54 | Support | GET | `/support/tickets/{id}` | `support.get_ticket` | `support:read` | `support.getTicket` | none | yes (GET) |
 | 55 | Support | POST | `/support/tickets/{id}/reply` | `support.reply_ticket` | `support:write` | `support.replyToTicket` | none | no (opt-in) — would post the reply twice |
+| 56 | Templates | POST | `/templates/sync` | `templates.sync` | `conversations:write` | `templates.sync` | none | no (opt-in) — expensive, subject to provider rate limits |
+| 57 | Templates | GET | `/templates` | `templates.list` | `conversations:read` | `templates.list` | none | yes (GET) |
 
-**Total in-scope operations: 55.** Tags present in the spec but not yet implemented: Templates, Webhooks.
+**Total in-scope operations: 57.** Tags present in the spec but not yet implemented: Webhooks.
 
 ---
 
@@ -2288,3 +2290,80 @@ _None documented._
 | `message.author_name` | string | yes | no |  |  |
 | `message.body` | string | yes | no |  |  |
 | `message.created_at` | string | yes | no | format: date-time |  |
+
+---
+
+## Templates
+
+### `POST /templates/sync` — Pull the latest templates from your WhatsApp providers
+
+- **operationId:** `templates.sync`
+- **SDK method:** `templates.sync`
+- **Auth:** Bearer API key, scope `conversations:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — expensive, subject to provider rate limits
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Ask every connected WhatsApp provider for its templates and record what came back, so `GET /api/v1/templates` can answer without touching a provider. THIS is where the provider cost lives: Meta returns everything in one call, but Plivo's list is a summary projection, so each template needs its own read — and Plivo rate-limits those (measured: 11 templates drew HTTP 429 on three). Sync retries a 429 with backoff; a read cannot, which is why the two are separate. Returns how many rows were recorded, how many CHANGED since last time, and how many the providers have stopped reporting (marked absent, never deleted). 🛑 `errors` is part of a SUCCESSFUL sync: a connection that could not be asked — a Plivo credential with no WABA id, an expired Meta token — is named while the providers that answered are still recorded.
+
+**Parameters**
+
+_None documented._
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `synced` | integer | yes | no | ≥ 0 |  |
+| `changed` | integer | yes | no | ≥ 0 |  |
+| `absent` | integer | yes | no | ≥ 0 |  |
+| `errors` | object[] | yes | no |  |  |
+| `errors[].provider` | string | yes | no |  |  |
+| `errors[].message` | string | yes | no |  |  |
+
+### `GET /templates` — List the stored WhatsApp templates and what each one needs filled in
+
+- **operationId:** `templates.list`
+- **SDK method:** `templates.list`
+- **Auth:** Bearer API key, scope `conversations:read`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** yes (GET)
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Every template across your WhatsApp connections WITH ITS STATUS, and WHAT TO FILL IN for each one. The list is NOT filtered — `pending`, `rejected`, `paused`, `disabled` and `unknown` rows come back too, because "why can I not send this one" is a question the status answers; only `approved` is sendable and checking it is yours to do. Outside WhatsApp's 24-hour service window a template is the only thing deliverable, and `POST /api/v1/messages` takes one by `name` — this is how you discover which names exist and what they need. Each row carries `params`: `body_parameter_count` (how many ordered values `template.body_parameters` must carry), the approved `body_text` so you can see what you are filling, a `header` when the approved header takes a per-send value, and the `buttons` needing one — each with its index in the APPROVED button list, because Meta fills buttons by index. 🛑 `params` ABSENT means the provider row carried no readable components, i.e. UNDETERMINED — not "nothing to fill"; sending no values then fails after acceptance as a delivery-receipt 350. Only `status: "approved"` is sendable. Served from the copy this workspace holds, so it never touches a provider and never inherits their rate limits — `synced_at` says when that copy was last refreshed by `POST /api/v1/templates/sync`. 🛑 `synced_at: null` means this workspace has NEVER synced, which is a different statement from "you have no approved templates": an empty list WITH a timestamp means the providers genuinely reported none. Approval is asynchronous and the provider owns `status`, so a stored verdict can lag — sync before acting on one if it matters. The fill spec does not lag: body text, placeholder count, header and buttons are fixed when a template is approved.
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| query | `number` | string | no |  |  |
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `templates` | object[] | yes | no |  |  |
+| `templates[].name` | string | yes | no |  |  |
+| `templates[].language` | string | yes | no |  |  |
+| `templates[].status` | string | yes | no | enum: `"approved"`, `"pending"`, `"rejected"`, `"paused"`, `"disabled"`, `"unknown"` |  |
+| `templates[].category` | string | no | no |  |  |
+| `templates[].provider_template_id` | string | no | no |  |  |
+| `templates[].credential_id` | string | yes | no |  |  |
+| `templates[].provider` | string | yes | no |  |  |
+| `templates[].raw_status` | string | no | no |  |  |
+| `templates[].params` | object | no | no |  |  |
+| `templates[].params.body_parameter_count` | integer | yes | no | ≥ 0 |  |
+| `templates[].params.body_text` | string | no | no |  |  |
+| `templates[].params.header` | object | no | no |  |  |
+| `templates[].params.header.type` | string | yes | no | enum: `"text"`, `"image"`, `"video"`, `"document"` |  |
+| `templates[].params.buttons` | object[] | no | no |  |  |
+| `templates[].params.buttons[].sub_type` | string | yes | no | enum: `"quick_reply"`, `"url"` |  |
+| `templates[].params.buttons[].index` | integer | yes | no | ≥ 0 |  |
+| `templates[].params.unsupported` | string[] | no | no |  |  |
+| `templates[].waba_id` | string | no | no |  |  |
+| `templates[].numbers` | string[] | no | no |  |  |
+| `synced_at` | string | yes | yes |  |  |

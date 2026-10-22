@@ -310,6 +310,16 @@ describe("Support", () => {
   });
 });
 
+describe("Templates", () => {
+  test("templates.sync", () => {
+    expectTypeOf<Matches<SDK.TemplateSyncResponse, Res<"templates.sync", 200>>>().toEqualTypeOf<true>();
+  });
+  test("templates.list", () => {
+    expectTypeOf<Matches<SDK.TemplateListParams, Query<"templates.list">>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<SDK.TemplateListResponse, Res<"templates.list", 200>>>().toEqualTypeOf<true>();
+  });
+});
+
 describe("checker sanity (negative controls)", () => {
   type Spec = Res<"customers.get", 200>;
   test("detects a missing optional field", () => {

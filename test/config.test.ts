@@ -86,6 +86,7 @@ describe("client configuration", () => {
         "messages",
         "outbound",
         "support",
+        "templates",
       ].sort(),
     );
   });

@@ -29,6 +29,7 @@ export const IN_SCOPE_TAGS = [
   "Messages",
   "Agents",
   "Support",
+  "Templates",
 ];
 
 /** operationId -> SDK mapping. pagination: none | cursor | after | page-meta. */
@@ -88,6 +89,8 @@ const SDK_MAPPING = {
   "support.list_tickets": { sdk: "support.listTickets", pagination: "none", retry: "yes (GET)" },
   "support.get_ticket": { sdk: "support.getTicket", pagination: "none", retry: "yes (GET)" },
   "support.reply_ticket": { sdk: "support.replyToTicket", pagination: "none", retry: "no (opt-in) — would post the reply twice" },
+  "templates.sync": { sdk: "templates.sync", pagination: "none", retry: "no (opt-in) — expensive, subject to provider rate limits" },
+  "templates.list": { sdk: "templates.list", pagination: "none", retry: "yes (GET)" },
 };
 
 const PAGINATION_TEXT = {

@@ -11,6 +11,7 @@ import { McpServers } from "../resources/mcp-servers/mcp-servers.js";
 import { Messages } from "../resources/messages/messages.js";
 import { Outbound } from "../resources/outbound/outbound.js";
 import { Support } from "../resources/support/support.js";
+import { Templates } from "../resources/templates/templates.js";
 import { resolveConfig, type ClientOptions } from "./config.js";
 import { HttpClient } from "./http-client.js";
 import type { ApiRequest, RequestOptions } from "./request.js";
@@ -44,6 +45,7 @@ export class PerfoxClient {
   readonly messages: Messages;
   readonly agents: Agents;
   readonly support: Support;
+  readonly templates: Templates;
 
   readonly #http: HttpClient;
 
@@ -62,6 +64,7 @@ export class PerfoxClient {
     this.messages = new Messages(this.#http);
     this.agents = new Agents(this.#http);
     this.support = new Support(this.#http);
+    this.templates = new Templates(this.#http);
   }
 
   /** The resolved API base URL, e.g. `https://acme-api.perfox.ai/api/v1`. */

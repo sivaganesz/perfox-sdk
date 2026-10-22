@@ -246,6 +246,7 @@ describe("retries", () => {
     ["support.createTicket", (c) =>
       c.support.createTicket({ subject: "abc", description: "d", category: "platform" })],
     ["support.replyToTicket", (c) => c.support.replyToTicket("t1", { body: "b" })],
+    ["templates.sync", (c) => c.templates.sync()],
   ])("never auto-retries non-idempotent %s", async (_, run) => {
     const { client, requests } = createTestClient(() => json({ error: "unavailable" }, 503));
     await expect(withFakeTimers(() => run(client))).rejects.toBeInstanceOf(InternalServerError);

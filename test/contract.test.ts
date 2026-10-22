@@ -30,10 +30,11 @@ const IN_SCOPE_TAGS = [
   "Messages",
   "Agents",
   "Support",
+  "Templates",
 ];
 
 /** Operations the spec documents under IN_SCOPE_TAGS (guards against silent spec changes). */
-const EXPECTED_OPERATION_COUNT = 55;
+const EXPECTED_OPERATION_COUNT = 57;
 
 interface SchemaNode {
   type?: string;
@@ -426,6 +427,10 @@ const INVOCATIONS: Record<string, Invocation[]> = {
       run: (c) => c.support.replyToTicket(ID, { body: "Still happening.", requester_email: "ops@example.com" }),
     },
   ],
+
+  // Templates
+  "templates.sync": [{ method: "templates.sync", run: (c) => c.templates.sync() }],
+  "templates.list": [{ method: "templates.list", run: (c) => c.templates.list({ number: "+911234567890" }) }],
 };
 
 // ---------------------------------------------------------------- helpers
@@ -498,6 +503,7 @@ describe("spec coverage", () => {
       "messages",
       "agents",
       "support",
+      "templates",
     ] as const;
     const publicMethods = resources.flatMap((name) => {
       const proto = Object.getPrototypeOf(client[name]) as object;
