@@ -175,14 +175,14 @@ describe("agents.publish", () => {
 
 describe("extensibility", () => {
   test("a custom resource reuses the client's transport", async () => {
-    class Support extends APIResource {
-      listTickets(options?: RequestOptions) {
-        return this._request<{ data: unknown[] }>({ method: "GET", path: "/support/tickets", idempotent: true }, options);
+    class Widgets extends APIResource {
+      list(options?: RequestOptions) {
+        return this._request<{ data: unknown[] }>({ method: "GET", path: "/widgets", idempotent: true }, options);
       }
     }
     const { client, requests } = createTestClient(() => json({ data: [] }));
-    await client.resource(Support).listTickets();
-    expect(requests[0]!.url.pathname).toBe("/api/v1/support/tickets");
+    await client.resource(Widgets).list();
+    expect(requests[0]!.url.pathname).toBe("/api/v1/widgets");
     expect(requests[0]!.headers.get("authorization")).toMatch(/^Bearer sk_/);
   });
 });

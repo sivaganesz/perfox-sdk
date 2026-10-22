@@ -85,6 +85,7 @@ describe("client configuration", () => {
         "mcpServers",
         "messages",
         "outbound",
+        "support",
       ].sort(),
     );
   });

@@ -43,5 +43,6 @@ export * from "./resources/billing/index.js";
 export * from "./resources/outbound/index.js";
 export * from "./resources/messages/index.js";
 export * from "./resources/agents/index.js";
+export * from "./resources/support/index.js";
 
 export { VERSION } from "./version.js";

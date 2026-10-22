@@ -27,10 +27,10 @@ Status legend: ✅ done · 🚧 in progress · ⏳ pending
 | 9 | Outbound | `outbound` | 1 | 1 | 0 | ✅ |
 | 10 | Messages | `messages` | 3 | 3 | 0 | ✅ |
 | 11 | Agents | `agents` | 7 | 7 | 0 | ✅ |
-| 12 | Support | `support` | 4 | 0 | 4 | ⏳ |
+| 12 | Support | `support` | 4 | 4 | 0 | ✅ |
 | 13 | Templates | `templates` | 2 | 0 | 2 | ⏳ |
 | 14 | Webhooks | `webhooks` | 5 | 0 | 5 | ⏳ |
-| | **Total** | | **62** | **51** | **11** | **82%** |
+| | **Total** | | **62** | **55** | **7** | **89%** |
 
 ## 2. Full inventory
 
@@ -142,14 +142,14 @@ Status legend: ✅ done · 🚧 in progress · ⏳ pending
 | POST | `/agents/from-spec` | `agents.create_from_spec` | `agents.createFromSpec` | ✅ | ✅ |
 | POST | `/agents/generate` | `agents.generate` | `agents.generate` | ✅ | ✅ |
 
-### Support (0/4)
+### Support (4/4)
 
-| Method | Path | operationId | SDK method (planned) | Status | Tests |
+| Method | Path | operationId | SDK method | Status | Tests |
 |---|---|---|---|---|---|
-| POST | `/support/tickets` | `support.create_ticket` | `support.createTicket` | ⏳ | — |
-| GET | `/support/tickets` | `support.list_tickets` | `support.listTickets` | ⏳ | — |
-| GET | `/support/tickets/{id}` | `support.get_ticket` | `support.getTicket` | ⏳ | — |
-| POST | `/support/tickets/{id}/reply` | `support.reply_ticket` | `support.replyToTicket` | ⏳ | — |
+| POST | `/support/tickets` | `support.create_ticket` | `support.createTicket` | ✅ | ✅ |
+| GET | `/support/tickets` | `support.list_tickets` | `support.listTickets` | ✅ | ✅ |
+| GET | `/support/tickets/{id}` | `support.get_ticket` | `support.getTicket` | ✅ | ✅ |
+| POST | `/support/tickets/{id}/reply` | `support.reply_ticket` | `support.replyToTicket` | ✅ | ✅ |
 
 ### Templates (0/2)
 
@@ -213,7 +213,8 @@ Gaps in the first 10 categories are listed in [`implementation-plan.md`](./imple
 | 2026-10-07 | `master` | `b5aac74` | v0.1.0: 10 categories, 44 operations. | 292 passed |
 | 2026-10-22 | `feat/remaining-api-categories` | `20b60c2` | Analysis approved; branch and this tracker created. | — |
 | 2026-10-22 | `feat/remaining-api-categories` | `b4014d1` | Spec snapshot refreshed; `ended` status and `app_platform_key` credential type added. | 292 passed |
-| 2026-10-22 | `feat/remaining-api-categories` | _Agents_ | Agents: 7 operations (`agents.*`). | 326 passed |
+| 2026-10-22 | `feat/remaining-api-categories` | `d25b928` | Agents: 7 operations (`agents.*`). | 326 passed |
+| 2026-10-22 | `feat/remaining-api-categories` | _Support_ | Support: 4 operations (`support.*`). | 344 passed |
 
 ## 6. How to update
 

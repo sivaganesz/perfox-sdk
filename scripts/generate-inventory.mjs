@@ -28,6 +28,7 @@ export const IN_SCOPE_TAGS = [
   "Outbound",
   "Messages",
   "Agents",
+  "Support",
 ];
 
 /** operationId -> SDK mapping. pagination: none | cursor | after | page-meta. */
@@ -83,6 +84,10 @@ const SDK_MAPPING = {
   "agents.publish": { sdk: "agents.publish", pagination: "none", retry: "no (opt-in) — each publish snapshots a new version" },
   "agents.create_from_spec": { sdk: "agents.createFromSpec", pagination: "none", retry: "no (opt-in) — would create a second agent" },
   "agents.generate": { sdk: "agents.generate", pagination: "none", retry: "no (opt-in) — would create a second agent and re-run the LLM" },
+  "support.create_ticket": { sdk: "support.createTicket", pagination: "none", retry: "no (opt-in) — would file a duplicate ticket" },
+  "support.list_tickets": { sdk: "support.listTickets", pagination: "none", retry: "yes (GET)" },
+  "support.get_ticket": { sdk: "support.getTicket", pagination: "none", retry: "yes (GET)" },
+  "support.reply_ticket": { sdk: "support.replyToTicket", pagination: "none", retry: "no (opt-in) — would post the reply twice" },
 };
 
 const PAGINATION_TEXT = {

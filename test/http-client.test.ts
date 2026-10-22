@@ -243,6 +243,9 @@ describe("retries", () => {
     ["agents.createFromSpec", (c) =>
       c.agents.createFromSpec({ name: "a", persona_name: "M", role: "r", system_prompt: "p" })],
     ["agents.generate", (c) => c.agents.generate({ prompt: "p" })],
+    ["support.createTicket", (c) =>
+      c.support.createTicket({ subject: "abc", description: "d", category: "platform" })],
+    ["support.replyToTicket", (c) => c.support.replyToTicket("t1", { body: "b" })],
   ])("never auto-retries non-idempotent %s", async (_, run) => {
     const { client, requests } = createTestClient(() => json({ error: "unavailable" }, 503));
     await expect(withFakeTimers(() => run(client))).rejects.toBeInstanceOf(InternalServerError);

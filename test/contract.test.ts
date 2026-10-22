@@ -29,10 +29,11 @@ const IN_SCOPE_TAGS = [
   "Outbound",
   "Messages",
   "Agents",
+  "Support",
 ];
 
 /** Operations the spec documents under IN_SCOPE_TAGS (guards against silent spec changes). */
-const EXPECTED_OPERATION_COUNT = 51;
+const EXPECTED_OPERATION_COUNT = 55;
 
 interface SchemaNode {
   type?: string;
@@ -402,6 +403,29 @@ const INVOCATIONS: Record<string, Invocation[]> = {
         }),
     },
   ],
+
+  // Support
+  "support.create_ticket": [
+    {
+      method: "support.createTicket",
+      run: (c) =>
+        c.support.createTicket({
+          subject: "Webhook deliveries failing",
+          description: "Deliveries to https://example.com/hook return 401 since 10:00 UTC.",
+          category: "platform",
+          severity: "high",
+          requester_email: "ops@example.com",
+        }),
+    },
+  ],
+  "support.list_tickets": [{ method: "support.listTickets", run: (c) => c.support.listTickets() }],
+  "support.get_ticket": [{ method: "support.getTicket", run: (c) => c.support.getTicket(ID) }],
+  "support.reply_ticket": [
+    {
+      method: "support.replyToTicket",
+      run: (c) => c.support.replyToTicket(ID, { body: "Still happening.", requester_email: "ops@example.com" }),
+    },
+  ],
 };
 
 // ---------------------------------------------------------------- helpers
@@ -473,6 +497,7 @@ describe("spec coverage", () => {
       "outbound",
       "messages",
       "agents",
+      "support",
     ] as const;
     const publicMethods = resources.flatMap((name) => {
       const proto = Object.getPrototypeOf(client[name]) as object;

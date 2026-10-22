@@ -291,6 +291,25 @@ describe("Agents", () => {
   });
 });
 
+describe("Support", () => {
+  test("support.create_ticket", () => {
+    expectTypeOf<Matches<SDK.SupportTicketCreateParams, Body<"support.create_ticket">>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<SDK.SupportTicket, Res<"support.create_ticket", 201>>>().toEqualTypeOf<true>();
+  });
+  test("support.list_tickets", () => {
+    expectTypeOf<Matches<SDK.SupportTicketListResponse, Res<"support.list_tickets", 200>>>().toEqualTypeOf<true>();
+  });
+  test("support.get_ticket", () => {
+    expectTypeOf<Matches<SDK.SupportTicket, Res<"support.get_ticket", 200>>>().toEqualTypeOf<true>();
+  });
+  test("support.reply_ticket", () => {
+    expectTypeOf<Matches<SDK.SupportTicketReplyParams, Body<"support.reply_ticket">>>().toEqualTypeOf<true>();
+    expectTypeOf<
+      Matches<SDK.SupportTicketReplyResponse, Res<"support.reply_ticket", 200>>
+    >().toEqualTypeOf<true>();
+  });
+});
+
 describe("checker sanity (negative controls)", () => {
   type Spec = Res<"customers.get", 200>;
   test("detects a missing optional field", () => {

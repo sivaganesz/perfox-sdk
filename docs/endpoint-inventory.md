@@ -72,8 +72,12 @@
 | 49 | Agents | POST | `/agents/{id}/publish` | `agents.publish` | `workflows:publish` | `agents.publish` | none | no (opt-in) — each publish snapshots a new version |
 | 50 | Agents | POST | `/agents/from-spec` | `agents.create_from_spec` | `workflows:write` | `agents.createFromSpec` | none | no (opt-in) — would create a second agent |
 | 51 | Agents | POST | `/agents/generate` | `agents.generate` | `workflows:write` | `agents.generate` | none | no (opt-in) — would create a second agent and re-run the LLM |
+| 52 | Support | POST | `/support/tickets` | `support.create_ticket` | `support:write` | `support.createTicket` | none | no (opt-in) — would file a duplicate ticket |
+| 53 | Support | GET | `/support/tickets` | `support.list_tickets` | `support:read` | `support.listTickets` | none | yes (GET) |
+| 54 | Support | GET | `/support/tickets/{id}` | `support.get_ticket` | `support:read` | `support.getTicket` | none | yes (GET) |
+| 55 | Support | POST | `/support/tickets/{id}/reply` | `support.reply_ticket` | `support:write` | `support.replyToTicket` | none | no (opt-in) — would post the reply twice |
 
-**Total in-scope operations: 51.** Tags present in the spec but not yet implemented: Support, Templates, Webhooks.
+**Total in-scope operations: 55.** Tags present in the spec but not yet implemented: Templates, Webhooks.
 
 ---
 
@@ -2107,3 +2111,180 @@ _None documented._
 | `node_count` | integer | yes | no | ≥ 0 |  |
 | `published` | boolean | yes | no |  |  |
 | `version` | integer | no | no | > 0 |  |
+
+---
+
+## Support
+
+### `POST /support/tickets` — Raise a support ticket
+
+- **operationId:** `support.create_ticket`
+- **SDK method:** `support.createTicket`
+- **Auth:** Bearer API key, scope `support:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — would file a duplicate ticket
+- **Statuses:** 201 Success, 401 Error, 403 Error, 404 Error
+
+> File a ticket with the Skillmine support teams from your own tooling. `category` routes it: `forward_deployment` for help with your implementation, `platform` for a suspected platform defect. Optionally attribute it to one of your workspace users with `requester_email`; omit to raise it as the API integration. Attachments are not supported on this surface yet — reference a link in the description.
+
+**Parameters**
+
+_None documented._
+
+**Request body** (`application/json`, required: yes)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `subject` | string | yes | no | minLength 3; maxLength 200 |  |
+| `description` | string | yes | no | minLength 1; maxLength 8000 |  |
+| `category` | string | yes | no | enum: `"forward_deployment"`, `"platform"` |  |
+| `severity` | string | no | no | enum: `"low"`, `"medium"`, `"high"`, `"urgent"`; default: "medium" |  |
+| `requester_email` | string | no | no | format: email; maxLength 320 |  |
+
+**Response 201** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `ticket_number` | number | yes | no |  |  |
+| `subject` | string | yes | no |  |  |
+| `description` | string | yes | no |  |  |
+| `category` | string | yes | no |  | forward_deployment \| platform |
+| `severity` | string | yes | no |  | low \| medium \| high \| urgent |
+| `status` | string | yes | no |  | open \| in_progress \| awaiting_customer \| resolved \| closed |
+| `created_via` | string | yes | no |  | studio \| api \| chatbot |
+| `created_by` | object | yes | no |  |  |
+| `created_by.name` | string | yes | no |  |  |
+| `created_by.email` | string | yes | no |  |  |
+| `assigned` | boolean | yes | no |  |  |
+| `assigned_team` | string | no | no |  |  |
+| `messages` | object[] | yes | no |  |  |
+| `messages[].id` | string | yes | no |  |  |
+| `messages[].author_kind` | string | yes | no |  | requester \| responder |
+| `messages[].author_name` | string | yes | no |  |  |
+| `messages[].body` | string | yes | no |  |  |
+| `messages[].attachment_count` | number | yes | no |  |  |
+| `messages[].created_at` | string | yes | no | format: date-time |  |
+| `created_at` | string | yes | no | format: date-time |  |
+| `updated_at` | string | yes | no | format: date-time |  |
+| `last_activity_at` | string | yes | no | format: date-time |  |
+
+### `GET /support/tickets` — List your support tickets
+
+- **operationId:** `support.list_tickets`
+- **SDK method:** `support.listTickets`
+- **Auth:** Bearer API key, scope `support:read`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** yes (GET)
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Every ticket raised by your workspace, newest activity first, however it was raised (Studio, API or the support chatbot).
+
+**Parameters**
+
+_None documented._
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `data` | object[] | yes | no |  |  |
+| `data[].id` | string | yes | no |  |  |
+| `data[].ticket_number` | number | yes | no |  |  |
+| `data[].subject` | string | yes | no |  |  |
+| `data[].category` | string | yes | no |  |  |
+| `data[].severity` | string | yes | no |  |  |
+| `data[].status` | string | yes | no |  |  |
+| `data[].created_via` | string | yes | no |  |  |
+| `data[].created_by` | object | yes | no |  |  |
+| `data[].created_by.name` | string | yes | no |  |  |
+| `data[].created_by.email` | string | yes | no |  |  |
+| `data[].assigned` | boolean | yes | no |  |  |
+| `data[].message_count` | number | yes | no |  |  |
+| `data[].created_at` | string | yes | no | format: date-time |  |
+| `data[].last_activity_at` | string | yes | no | format: date-time |  |
+
+### `GET /support/tickets/{id}` — Get a support ticket
+
+- **operationId:** `support.get_ticket`
+- **SDK method:** `support.getTicket`
+- **Auth:** Bearer API key, scope `support:read`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** yes (GET)
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> One ticket with its full message thread.
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| path | `id` | string | yes |  | Resource id. |
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `ticket_number` | number | yes | no |  |  |
+| `subject` | string | yes | no |  |  |
+| `description` | string | yes | no |  |  |
+| `category` | string | yes | no |  | forward_deployment \| platform |
+| `severity` | string | yes | no |  | low \| medium \| high \| urgent |
+| `status` | string | yes | no |  | open \| in_progress \| awaiting_customer \| resolved \| closed |
+| `created_via` | string | yes | no |  | studio \| api \| chatbot |
+| `created_by` | object | yes | no |  |  |
+| `created_by.name` | string | yes | no |  |  |
+| `created_by.email` | string | yes | no |  |  |
+| `assigned` | boolean | yes | no |  |  |
+| `assigned_team` | string | no | no |  |  |
+| `messages` | object[] | yes | no |  |  |
+| `messages[].id` | string | yes | no |  |  |
+| `messages[].author_kind` | string | yes | no |  | requester \| responder |
+| `messages[].author_name` | string | yes | no |  |  |
+| `messages[].body` | string | yes | no |  |  |
+| `messages[].attachment_count` | number | yes | no |  |  |
+| `messages[].created_at` | string | yes | no | format: date-time |  |
+| `created_at` | string | yes | no | format: date-time |  |
+| `updated_at` | string | yes | no | format: date-time |  |
+| `last_activity_at` | string | yes | no | format: date-time |  |
+
+### `POST /support/tickets/{id}/reply` — Reply to a support ticket
+
+- **operationId:** `support.reply_ticket`
+- **SDK method:** `support.replyToTicket`
+- **Auth:** Bearer API key, scope `support:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — would post the reply twice
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Add a message to a ticket you raised. Replying to a resolved or awaiting-customer ticket re-opens it.
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| path | `id` | string | yes |  | Resource id. |
+
+**Request body** (`application/json`, required: yes)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `body` | string | yes | no | minLength 1; maxLength 8000 |  |
+| `requester_email` | string | no | no | format: email; maxLength 320 |  |
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `reopened` | boolean | yes | no |  |  |
+| `message` | object | yes | no |  |  |
+| `message.id` | string | yes | no |  |  |
+| `message.author_name` | string | yes | no |  |  |
+| `message.body` | string | yes | no |  |  |
+| `message.created_at` | string | yes | no | format: date-time |  |
