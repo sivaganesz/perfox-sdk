@@ -45,5 +45,6 @@ export * from "./resources/messages/index.js";
 export * from "./resources/agents/index.js";
 export * from "./resources/support/index.js";
 export * from "./resources/templates/index.js";
+export * from "./resources/webhooks/index.js";
 
 export { VERSION } from "./version.js";

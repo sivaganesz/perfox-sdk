@@ -87,6 +87,7 @@ describe("client configuration", () => {
         "outbound",
         "support",
         "templates",
+        "webhooks",
       ].sort(),
     );
   });

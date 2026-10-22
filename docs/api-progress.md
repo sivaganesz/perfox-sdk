@@ -29,8 +29,8 @@ Status legend: ✅ done · 🚧 in progress · ⏳ pending
 | 11 | Agents | `agents` | 7 | 7 | 0 | ✅ |
 | 12 | Support | `support` | 4 | 4 | 0 | ✅ |
 | 13 | Templates | `templates` | 2 | 2 | 0 | ✅ |
-| 14 | Webhooks | `webhooks` | 5 | 0 | 5 | ⏳ |
-| | **Total** | | **62** | **57** | **5** | **92%** |
+| 14 | Webhooks | `webhooks` | 5 | 5 | 0 | ✅ |
+| | **Total** | | **62** | **62** | **0** | **100%** |
 
 ## 2. Full inventory
 
@@ -158,15 +158,15 @@ Status legend: ✅ done · 🚧 in progress · ⏳ pending
 | POST | `/templates/sync` | `templates.sync` | `templates.sync` | ✅ | ✅ |
 | GET | `/templates` | `templates.list` | `templates.list` | ✅ | ✅ |
 
-### Webhooks (0/5)
+### Webhooks (5/5)
 
-| Method | Path | operationId | SDK method (planned) | Status | Tests |
+| Method | Path | operationId | SDK method | Status | Tests |
 |---|---|---|---|---|---|
-| POST | `/webhook-subscriptions` | `webhooks.create` | `webhooks.create` | ⏳ | — |
-| GET | `/webhook-subscriptions` | `webhooks.list` | `webhooks.list` | ⏳ | — |
-| PATCH | `/webhook-subscriptions/{id}` | `webhooks.patch` | `webhooks.update` | ⏳ | — |
-| DELETE | `/webhook-subscriptions/{id}` | `webhooks.delete` | `webhooks.delete` | ⏳ | — |
-| POST | `/webhook-subscriptions/{id}/test` | `webhooks.test` | `webhooks.test` | ⏳ | — |
+| POST | `/webhook-subscriptions` | `webhooks.create` | `webhooks.create` | ✅ | ✅ |
+| GET | `/webhook-subscriptions` | `webhooks.list` | `webhooks.list` | ✅ | ✅ |
+| PATCH | `/webhook-subscriptions/{id}` | `webhooks.patch` | `webhooks.update` | ✅ | ✅ |
+| DELETE | `/webhook-subscriptions/{id}` | `webhooks.delete` | `webhooks.delete` | ✅ | ✅ |
+| POST | `/webhook-subscriptions/{id}/test` | `webhooks.test` | `webhooks.test` | ✅ | ✅ |
 
 ## 3. API change log
 
@@ -215,7 +215,8 @@ Gaps in the first 10 categories are listed in [`implementation-plan.md`](./imple
 | 2026-10-22 | `feat/remaining-api-categories` | `b4014d1` | Spec snapshot refreshed; `ended` status and `app_platform_key` credential type added. | 292 passed |
 | 2026-10-22 | `feat/remaining-api-categories` | `d25b928` | Agents: 7 operations (`agents.*`). | 326 passed |
 | 2026-10-22 | `feat/remaining-api-categories` | `1a2f55b` | Support: 4 operations (`support.*`). | 344 passed |
-| 2026-10-22 | `feat/remaining-api-categories` | _Templates_ | Templates: 2 operations (`templates.*`). | 353 passed |
+| 2026-10-22 | `feat/remaining-api-categories` | `f307148` | Templates: 2 operations (`templates.*`). | 353 passed |
+| 2026-10-22 | `feat/remaining-api-categories` | _Webhooks_ | Webhooks: 5 operations (`webhooks.*`). All 62 operations implemented. | 379 passed |
 
 ## 6. How to update
 

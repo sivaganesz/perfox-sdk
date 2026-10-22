@@ -320,6 +320,28 @@ describe("Templates", () => {
   });
 });
 
+describe("Webhooks", () => {
+  test("webhooks.create", () => {
+    expectTypeOf<Matches<SDK.WebhookCreateParams, Body<"webhooks.create">>>().toEqualTypeOf<true>();
+    expectTypeOf<
+      Matches<SDK.WebhookSubscriptionWithSecret, Res<"webhooks.create", 201>>
+    >().toEqualTypeOf<true>();
+  });
+  test("webhooks.list", () => {
+    expectTypeOf<Matches<SDK.WebhookListResponse, Res<"webhooks.list", 200>>>().toEqualTypeOf<true>();
+  });
+  test("webhooks.patch", () => {
+    expectTypeOf<Matches<SDK.WebhookUpdateParams, Body<"webhooks.patch">>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<SDK.WebhookUpdateResponse, Res<"webhooks.patch", 200>>>().toEqualTypeOf<true>();
+  });
+  test("webhooks.delete", () => {
+    expectTypeOf<Matches<SDK.SuccessResponse, Res<"webhooks.delete", 200>>>().toEqualTypeOf<true>();
+  });
+  test("webhooks.test", () => {
+    expectTypeOf<Matches<SDK.WebhookTestResponse, Res<"webhooks.test", 200>>>().toEqualTypeOf<true>();
+  });
+});
+
 describe("checker sanity (negative controls)", () => {
   type Spec = Res<"customers.get", 200>;
   test("detects a missing optional field", () => {

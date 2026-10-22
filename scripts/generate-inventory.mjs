@@ -30,6 +30,7 @@ export const IN_SCOPE_TAGS = [
   "Agents",
   "Support",
   "Templates",
+  "Webhooks",
 ];
 
 /** operationId -> SDK mapping. pagination: none | cursor | after | page-meta. */
@@ -91,6 +92,11 @@ const SDK_MAPPING = {
   "support.reply_ticket": { sdk: "support.replyToTicket", pagination: "none", retry: "no (opt-in) — would post the reply twice" },
   "templates.sync": { sdk: "templates.sync", pagination: "none", retry: "no (opt-in) — expensive, subject to provider rate limits" },
   "templates.list": { sdk: "templates.list", pagination: "none", retry: "yes (GET)" },
+  "webhooks.create": { sdk: "webhooks.create", pagination: "none", retry: "no (opt-in) — would create a duplicate whose one-time secret is never seen" },
+  "webhooks.list": { sdk: "webhooks.list", pagination: "none", retry: "yes (GET)" },
+  "webhooks.patch": { sdk: "webhooks.update", pagination: "none", retry: "no (opt-in) — rotate_secret would mint a second secret" },
+  "webhooks.delete": { sdk: "webhooks.delete", pagination: "none", retry: "yes (DELETE)" },
+  "webhooks.test": { sdk: "webhooks.test", pagination: "none", retry: "no (opt-in) — caller wants the actual synchronous result" },
 };
 
 const PAGINATION_TEXT = {

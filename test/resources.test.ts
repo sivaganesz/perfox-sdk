@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { APIResource, InvalidRequestError, ValidationError, type RequestOptions } from "../src/index.js";
 import { createTestClient, json, jsonBody, queryOf } from "./helpers.js";
 
@@ -170,6 +170,41 @@ describe("agents.publish", () => {
     expect(error.code).toBe("not_publishable");
     expect(error.body).toEqual(body);
     expect(requests[0]!.body).toBeUndefined();
+  });
+});
+
+describe("webhooks", () => {
+  const subscription = {
+    id: "wh_1",
+    url: "https://hooks.example.com/perfox",
+    events: ["message.inbound"],
+    status: "active",
+    consecutive_failures: 0,
+    created_at: "2026-10-22T00:00:00Z",
+    updated_at: "2026-10-22T00:00:00Z",
+  };
+
+  test("create returns the one-time signing secret unchanged", async () => {
+    const { client } = createTestClient(() => json({ ...subscription, secret: "whsec_once" }, 201));
+    const created = await client.webhooks.create({ url: subscription.url, events: ["message.inbound"] });
+    expect(created.secret).toBe("whsec_once");
+  });
+
+  test("delete is retried (idempotent) but test is not", async () => {
+    const flaky = () => createTestClient((_, i) => (i === 0 ? json({ error: "x" }, 503) : json({ success: true })));
+    vi.useFakeTimers();
+    try {
+      const del = flaky();
+      const pending = del.client.webhooks.delete("wh_1");
+      await vi.runAllTimersAsync();
+      await expect(pending).resolves.toEqual({ success: true });
+      expect(del.requests).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+    const tst = flaky();
+    await expect(tst.client.webhooks.test("wh_1")).rejects.toThrow(/503/);
+    expect(tst.requests).toHaveLength(1);
   });
 });
 

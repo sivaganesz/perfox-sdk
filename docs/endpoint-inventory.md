@@ -78,8 +78,13 @@
 | 55 | Support | POST | `/support/tickets/{id}/reply` | `support.reply_ticket` | `support:write` | `support.replyToTicket` | none | no (opt-in) — would post the reply twice |
 | 56 | Templates | POST | `/templates/sync` | `templates.sync` | `conversations:write` | `templates.sync` | none | no (opt-in) — expensive, subject to provider rate limits |
 | 57 | Templates | GET | `/templates` | `templates.list` | `conversations:read` | `templates.list` | none | yes (GET) |
+| 58 | Webhooks | POST | `/webhook-subscriptions` | `webhooks.create` | `webhooks:write` | `webhooks.create` | none | no (opt-in) — would create a duplicate whose one-time secret is never seen |
+| 59 | Webhooks | GET | `/webhook-subscriptions` | `webhooks.list` | `webhooks:read` | `webhooks.list` | none | yes (GET) |
+| 60 | Webhooks | PATCH | `/webhook-subscriptions/{id}` | `webhooks.patch` | `webhooks:write` | `webhooks.update` | none | no (opt-in) — rotate_secret would mint a second secret |
+| 61 | Webhooks | DELETE | `/webhook-subscriptions/{id}` | `webhooks.delete` | `webhooks:write` | `webhooks.delete` | none | yes (DELETE) |
+| 62 | Webhooks | POST | `/webhook-subscriptions/{id}/test` | `webhooks.test` | `webhooks:write` | `webhooks.test` | none | no (opt-in) — caller wants the actual synchronous result |
 
-**Total in-scope operations: 57.** Tags present in the spec but not yet implemented: Webhooks.
+**Total in-scope operations: 62.** Every tag in the spec is covered.
 
 ---
 
@@ -2367,3 +2372,173 @@ _None documented._
 | `templates[].waba_id` | string | no | no |  |  |
 | `templates[].numbers` | string[] | no | no |  |  |
 | `synced_at` | string | yes | yes |  |  |
+
+---
+
+## Webhooks
+
+### `POST /webhook-subscriptions` — Subscribe to inbound messages and delivery events
+
+- **operationId:** `webhooks.create`
+- **SDK method:** `webhooks.create`
+- **Auth:** Bearer API key, scope `webhooks:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — would create a duplicate whose one-time secret is never seen
+- **Statuses:** 201 Success, 401 Error, 403 Error, 404 Error
+
+> Register an HTTPS endpoint to receive `message.inbound` (a customer wrote to you) and `message.status` (a message you sent changed delivery state). 🛑 The signing `secret` is returned ONCE, here — it is stored encrypted and never shown again. Every delivery carries `X-Perfox-Signature: t=<unix>,v1=<hmac-sha256>` over `<t>.<raw body>`; verify it against the RAW body before parsing. Deliveries retry with exponential backoff and carry a stable `X-Perfox-Delivery` id you can use for idempotency.
+
+**Parameters**
+
+_None documented._
+
+**Request body** (`application/json`, required: yes)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `url` | string | yes | no | format: uri |  |
+| `events` | string[] | yes | no | minItems 1 |  |
+
+**Response 201** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `url` | string | yes | no |  |  |
+| `events` | string[] | yes | no |  |  |
+| `status` | string | yes | no |  |  |
+| `consecutive_failures` | number | yes | no |  |  |
+| `last_delivered_at` | string | no | no |  |  |
+| `last_failed_at` | string | no | no |  |  |
+| `last_error` | string | no | no |  |  |
+| `disabled_reason` | string | no | no |  |  |
+| `created_at` | string | yes | no |  |  |
+| `updated_at` | string | yes | no |  |  |
+| `secret` | string | yes | no |  |  |
+
+### `GET /webhook-subscriptions` — List webhook subscriptions
+
+- **operationId:** `webhooks.list`
+- **SDK method:** `webhooks.list`
+- **Auth:** Bearer API key, scope `webhooks:read`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** yes (GET)
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Your endpoints, with their health: consecutive failures, the last delivery, and the last error verbatim. A subscription the platform disabled after repeated failures carries `disabled_reason`.
+
+**Parameters**
+
+_None documented._
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `subscriptions` | object[] | yes | no |  |  |
+| `subscriptions[].id` | string | yes | no |  |  |
+| `subscriptions[].url` | string | yes | no |  |  |
+| `subscriptions[].events` | string[] | yes | no |  |  |
+| `subscriptions[].status` | string | yes | no |  |  |
+| `subscriptions[].consecutive_failures` | number | yes | no |  |  |
+| `subscriptions[].last_delivered_at` | string | no | no |  |  |
+| `subscriptions[].last_failed_at` | string | no | no |  |  |
+| `subscriptions[].last_error` | string | no | no |  |  |
+| `subscriptions[].disabled_reason` | string | no | no |  |  |
+| `subscriptions[].created_at` | string | yes | no |  |  |
+| `subscriptions[].updated_at` | string | yes | no |  |  |
+
+### `PATCH /webhook-subscriptions/{id}` — Update or re-enable a subscription
+
+- **operationId:** `webhooks.patch`
+- **SDK method:** `webhooks.update`
+- **Auth:** Bearer API key, scope `webhooks:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — rotate_secret would mint a second secret
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Change the URL or events, or set `status` back to `active` after the platform disabled it. Re-enabling clears the failure counter, so a fixed endpoint is not disabled again by its own history. 🛑 Send `rotate_secret: true` to mint a NEW signing secret — returned once, in this response, exactly as at creation. The old secret stops signing immediately, so a leaked one can be retired without deleting the subscription and going deaf in between; this is the only way back from a lost secret, because there is no route that reads one.
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| path | `id` | string | yes |  | Resource id. |
+
+**Request body** (`application/json`, required: yes)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `url` | string | no | no | format: uri |  |
+| `events` | string[] | no | no | minItems 1 |  |
+| `status` | string | no | no | enum: `"active"`, `"disabled"` |  |
+| `rotate_secret` | boolean | no | no |  |  |
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `url` | string | yes | no |  |  |
+| `events` | string[] | yes | no |  |  |
+| `status` | string | yes | no |  |  |
+| `consecutive_failures` | number | yes | no |  |  |
+| `last_delivered_at` | string | no | no |  |  |
+| `last_failed_at` | string | no | no |  |  |
+| `last_error` | string | no | no |  |  |
+| `disabled_reason` | string | no | no |  |  |
+| `created_at` | string | yes | no |  |  |
+| `updated_at` | string | yes | no |  |  |
+| `secret` | string | no | no |  |  |
+
+### `DELETE /webhook-subscriptions/{id}` — Delete a subscription
+
+- **operationId:** `webhooks.delete`
+- **SDK method:** `webhooks.delete`
+- **Auth:** Bearer API key, scope `webhooks:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** yes (DELETE)
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| path | `id` | string | yes |  | Resource id. |
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `success` | boolean | yes | no | enum: `true` |  |
+
+### `POST /webhook-subscriptions/{id}/test` — Send a test delivery
+
+- **operationId:** `webhooks.test`
+- **SDK method:** `webhooks.test`
+- **Auth:** Bearer API key, scope `webhooks:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — caller wants the actual synchronous result
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> POST a signed synthetic event to the endpoint and report what it answered — SYNCHRONOUSLY, so you can debug your signature check without waiting for real traffic. The event is `webhook.test`, which cannot be subscribed to and is never emitted by the platform, so a test can never be mistaken for a real message. It does not retry, does not count toward failures, and cannot disable the subscription.
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| path | `id` | string | yes |  | Resource id. |
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `delivered` | boolean | yes | no |  |  |
+| `status` | number | yes | no |  |  |
+| `error` | string | no | no |  |  |

@@ -31,10 +31,11 @@ const IN_SCOPE_TAGS = [
   "Agents",
   "Support",
   "Templates",
+  "Webhooks",
 ];
 
 /** Operations the spec documents under IN_SCOPE_TAGS (guards against silent spec changes). */
-const EXPECTED_OPERATION_COUNT = 57;
+const EXPECTED_OPERATION_COUNT = 62;
 
 interface SchemaNode {
   type?: string;
@@ -431,6 +432,30 @@ const INVOCATIONS: Record<string, Invocation[]> = {
   // Templates
   "templates.sync": [{ method: "templates.sync", run: (c) => c.templates.sync() }],
   "templates.list": [{ method: "templates.list", run: (c) => c.templates.list({ number: "+911234567890" }) }],
+
+  // Webhooks
+  "webhooks.create": [
+    {
+      method: "webhooks.create",
+      run: (c) =>
+        c.webhooks.create({ url: "https://hooks.example.com/perfox", events: ["message.inbound", "message.status"] }),
+    },
+  ],
+  "webhooks.list": [{ method: "webhooks.list", run: (c) => c.webhooks.list() }],
+  "webhooks.patch": [
+    {
+      method: "webhooks.update",
+      run: (c) =>
+        c.webhooks.update(ID, {
+          url: "https://hooks.example.com/v2",
+          events: ["message.status"],
+          status: "active",
+          rotate_secret: true,
+        }),
+    },
+  ],
+  "webhooks.delete": [{ method: "webhooks.delete", run: (c) => c.webhooks.delete(ID) }],
+  "webhooks.test": [{ method: "webhooks.test", run: (c) => c.webhooks.test(ID) }],
 };
 
 // ---------------------------------------------------------------- helpers
@@ -484,6 +509,13 @@ describe("spec coverage", () => {
     expect(inScopeOps).toHaveLength(EXPECTED_OPERATION_COUNT);
   });
 
+  test("every operation in the spec is implemented (no category left out)", () => {
+    const uncovered = [...allOps.entries()]
+      .filter(([, o]) => !IN_SCOPE_TAGS.includes(o.op.tags[0] ?? ""))
+      .map(([id, o]) => `${o.op.tags[0]}: ${id}`);
+    expect(uncovered).toEqual([]);
+  });
+
   test("every in-scope operation has SDK invocations, and nothing else does", () => {
     expect(Object.keys(INVOCATIONS).sort()).toEqual(inScopeOps.map(([id]) => id).sort());
   });
@@ -504,6 +536,7 @@ describe("spec coverage", () => {
       "agents",
       "support",
       "templates",
+      "webhooks",
     ] as const;
     const publicMethods = resources.flatMap((name) => {
       const proto = Object.getPrototypeOf(client[name]) as object;

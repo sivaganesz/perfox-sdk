@@ -12,6 +12,7 @@ import { Messages } from "../resources/messages/messages.js";
 import { Outbound } from "../resources/outbound/outbound.js";
 import { Support } from "../resources/support/support.js";
 import { Templates } from "../resources/templates/templates.js";
+import { Webhooks } from "../resources/webhooks/webhooks.js";
 import { resolveConfig, type ClientOptions } from "./config.js";
 import { HttpClient } from "./http-client.js";
 import type { ApiRequest, RequestOptions } from "./request.js";
@@ -46,6 +47,7 @@ export class PerfoxClient {
   readonly agents: Agents;
   readonly support: Support;
   readonly templates: Templates;
+  readonly webhooks: Webhooks;
 
   readonly #http: HttpClient;
 
@@ -65,6 +67,7 @@ export class PerfoxClient {
     this.agents = new Agents(this.#http);
     this.support = new Support(this.#http);
     this.templates = new Templates(this.#http);
+    this.webhooks = new Webhooks(this.#http);
   }
 
   /** The resolved API base URL, e.g. `https://acme-api.perfox.ai/api/v1`. */

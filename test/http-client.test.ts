@@ -247,6 +247,9 @@ describe("retries", () => {
       c.support.createTicket({ subject: "abc", description: "d", category: "platform" })],
     ["support.replyToTicket", (c) => c.support.replyToTicket("t1", { body: "b" })],
     ["templates.sync", (c) => c.templates.sync()],
+    ["webhooks.create", (c) => c.webhooks.create({ url: "https://h.example.com", events: ["message.inbound"] })],
+    ["webhooks.update", (c) => c.webhooks.update("w1", { rotate_secret: true })],
+    ["webhooks.test", (c) => c.webhooks.test("w1")],
   ])("never auto-retries non-idempotent %s", async (_, run) => {
     const { client, requests } = createTestClient(() => json({ error: "unavailable" }, 503));
     await expect(withFakeTimers(() => run(client))).rejects.toBeInstanceOf(InternalServerError);
