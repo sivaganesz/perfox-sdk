@@ -1,4 +1,5 @@
 import type { APIResource } from "../core/resource.js";
+import { Agents } from "../resources/agents/agents.js";
 import { Analytics } from "../resources/analytics/analytics.js";
 import { Billing } from "../resources/billing/billing.js";
 import { Calls } from "../resources/calls/calls.js";
@@ -40,6 +41,7 @@ export class PerfoxClient {
   readonly billing: Billing;
   readonly outbound: Outbound;
   readonly messages: Messages;
+  readonly agents: Agents;
 
   readonly #http: HttpClient;
 
@@ -56,6 +58,7 @@ export class PerfoxClient {
     this.billing = new Billing(this.#http);
     this.outbound = new Outbound(this.#http);
     this.messages = new Messages(this.#http);
+    this.agents = new Agents(this.#http);
   }
 
   /** The resolved API base URL, e.g. `https://acme-api.perfox.ai/api/v1`. */

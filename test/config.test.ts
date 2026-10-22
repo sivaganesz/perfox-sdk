@@ -70,10 +70,11 @@ describe("client configuration", () => {
     expect(PlatformClient).toBe(PerfoxClient);
   });
 
-  test("exposes exactly the 10 in-scope resources", () => {
+  test("exposes exactly the implemented resources", () => {
     const client = new PerfoxClient({ apiKey: TEST_API_KEY, workspace: "acme", fetch });
     expect(Object.keys(client).sort()).toEqual(
       [
+        "agents",
         "analytics",
         "billing",
         "calls",

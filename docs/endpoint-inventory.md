@@ -65,8 +65,15 @@
 | 42 | Messages | POST | `/messages` | `messages.create` | `conversations:write` | `messages.create` | none | no (opt-in) — would send twice |
 | 43 | Messages | GET | `/messages` | `messages.list` | `conversations:read` | `messages.list / messages.iterate` | cursor | yes (GET) |
 | 44 | Messages | GET | `/messages/{id}` | `messages.get` | `conversations:read` | `messages.get` | none | yes (GET) |
+| 45 | Agents | POST | `/agents` | `agents.create` | `workflows:write` | `agents.create` | none | no (opt-in) — would create a second agent |
+| 46 | Agents | GET | `/agents` | `agents.list` | `workflows:read` | `agents.list` | none | yes (GET) |
+| 47 | Agents | GET | `/agents/{id}` | `agents.get` | `workflows:read` | `agents.get` | none | yes (GET) |
+| 48 | Agents | PATCH | `/agents/{id}` | `agents.update` | `workflows:write` | `agents.update` | none | no (opt-in) |
+| 49 | Agents | POST | `/agents/{id}/publish` | `agents.publish` | `workflows:publish` | `agents.publish` | none | no (opt-in) — each publish snapshots a new version |
+| 50 | Agents | POST | `/agents/from-spec` | `agents.create_from_spec` | `workflows:write` | `agents.createFromSpec` | none | no (opt-in) — would create a second agent |
+| 51 | Agents | POST | `/agents/generate` | `agents.generate` | `workflows:write` | `agents.generate` | none | no (opt-in) — would create a second agent and re-run the LLM |
 
-**Total in-scope operations: 44.** Out-of-scope tags present in the spec and intentionally NOT implemented: Agents, Support, Templates, Webhooks.
+**Total in-scope operations: 51.** Tags present in the spec but not yet implemented: Support, Templates, Webhooks.
 
 ---
 
@@ -1734,3 +1741,369 @@ _None documented._
 | `error` | string | no | no |  |  |
 | `created_at` | string | yes | no |  |  |
 | `updated_at` | string | yes | no |  |  |
+
+---
+
+## Agents
+
+### `POST /agents` — Create an agent
+
+- **operationId:** `agents.create`
+- **SDK method:** `agents.create`
+- **Auth:** Bearer API key, scope `workflows:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — would create a second agent
+- **Statuses:** 201 Success, 401 Error, 403 Error, 404 Error
+
+> Creates an agent (workflow) as a draft. Send a full node/edge graph (trigger + ai_agent + persona + chat_model sub-nodes) or omit it and fill in via PATCH. Publish separately.
+
+**Parameters**
+
+_None documented._
+
+**Request body** (`application/json`, required: yes)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | string | yes | no | minLength 1; maxLength 200 |  |
+| `description` | string | no | no | default: "" |  |
+| `channels` | string[] | yes | no | minItems 1 | Channels this agent serves, e.g. ["web"]. |
+| `nodes` | object[] | no | no |  | Full node graph (trigger + ai_agent + persona + chat_model sub-nodes). |
+| `nodes[].id` | string | yes | no |  |  |
+| `nodes[].type` | string | yes | no | enum: `"trigger"`, `"ai_agent"`, `"agent_graph"`, `"logic"`, `"human"`, `"entity"`, `"data"`, `"analytics"`, `"http_request"`, `"document_processing"`, `"kb_indexer"`, `"workflow"`, `"render_view"`, `"agent_step"`, `"tool_step"`, `"sticky_note"`, `"chat_model"`, `"workflow_tool"`, `"pdf_creator"`, `"csv_creator"`, `"report_creator"`, `"email_sender"`, `"sms_sender"`, `"whatsapp_sender"`, `"human_escalator"`, `"phone_caller"`, `"http_requester"`, `"document_uploader"`, `"google_sheets_appender"`, `"google_sheets_read"`, `"db_query"`, `"mysql_query"`, `"mongodb_query"`, `"document_extractor"`, `"mcp_server"`, `"persona"`, `"knowledge_base"`, `"operator"` |  |
+| `nodes[].label` | string | yes | no |  |  |
+| `nodes[].position` | object | yes | no |  |  |
+| `nodes[].position.x` | number | yes | no |  |  |
+| `nodes[].position.y` | number | yes | no |  |  |
+| `nodes[].config` | map<string, any> | yes | no |  |  |
+| `nodes[].description` | string | no | no |  |  |
+| `nodes[].retry` | object | no | no |  |  |
+| `nodes[].retry.max_attempts` | integer | yes | no | ≥ 1; ≤ 10 |  |
+| `nodes[].retry.backoff_ms` | integer | yes | no | ≥ 0 |  |
+| `nodes[].timeout_ms` | integer | no | no | > 0 |  |
+| `nodes[].notes` | string | no | no |  |  |
+| `nodes[].pinned_input` | any | no | no |  |  |
+| `edges` | object[] | no | no |  | Typed edges. Sub-nodes link via connection_type ai_persona / ai_chat_model. |
+| `edges[].id` | string | yes | no |  |  |
+| `edges[].source` | string | yes | no |  |  |
+| `edges[].target` | string | yes | no |  |  |
+| `edges[].source_handle` | string | no | no |  |  |
+| `edges[].target_handle` | string | no | no |  |  |
+| `edges[].label` | string | no | no |  |  |
+| `edges[].condition` | string | no | no |  |  |
+| `edges[].connection_type` | string | no | no | enum: `"flow"`, `"ai_chat_model"`, `"ai_tool"`, `"ai_mcp_server"`, `"ai_output_parser"`, `"ai_persona"`, `"ai_knowledge_base"`, `"ai_operator"`, `"agent_graph_workers"` |  |
+
+**Response 201** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `name` | string | yes | no |  |  |
+| `description` | string | yes | no |  |  |
+| `status` | string | yes | no |  | draft \| testing \| published \| archived \| paused |
+| `channels` | string[] | yes | no |  | The channels this agent serves — one per trigger node on its canvas (e.g. ["web", "whatsapp", "phone"]). Empty for a webhook- or schedule-only agent. |
+| `active_version` | integer | yes | no | ≥ 0 |  |
+| `node_count` | integer | yes | no | ≥ 0 |  |
+| `created_at` | string | yes | no | format: date-time |  |
+| `updated_at` | string | yes | no | format: date-time |  |
+| `nodes` | object[] | yes | no |  |  |
+| `nodes[].id` | string | yes | no |  |  |
+| `nodes[].type` | string | yes | no | enum: `"trigger"`, `"ai_agent"`, `"agent_graph"`, `"logic"`, `"human"`, `"entity"`, `"data"`, `"analytics"`, `"http_request"`, `"document_processing"`, `"kb_indexer"`, `"workflow"`, `"render_view"`, `"agent_step"`, `"tool_step"`, `"sticky_note"`, `"chat_model"`, `"workflow_tool"`, `"pdf_creator"`, `"csv_creator"`, `"report_creator"`, `"email_sender"`, `"sms_sender"`, `"whatsapp_sender"`, `"human_escalator"`, `"phone_caller"`, `"http_requester"`, `"document_uploader"`, `"google_sheets_appender"`, `"google_sheets_read"`, `"db_query"`, `"mysql_query"`, `"mongodb_query"`, `"document_extractor"`, `"mcp_server"`, `"persona"`, `"knowledge_base"`, `"operator"` |  |
+| `nodes[].label` | string | yes | no |  |  |
+| `nodes[].position` | object | yes | no |  |  |
+| `nodes[].position.x` | number | yes | no |  |  |
+| `nodes[].position.y` | number | yes | no |  |  |
+| `nodes[].config` | map<string, any> | yes | no |  |  |
+| `nodes[].description` | string | no | no |  |  |
+| `nodes[].retry` | object | no | no |  |  |
+| `nodes[].retry.max_attempts` | integer | yes | no | ≥ 1; ≤ 10 |  |
+| `nodes[].retry.backoff_ms` | integer | yes | no | ≥ 0 |  |
+| `nodes[].timeout_ms` | integer | no | no | > 0 |  |
+| `nodes[].notes` | string | no | no |  |  |
+| `nodes[].pinned_input` | any | no | no |  |  |
+| `edges` | object[] | yes | no |  |  |
+| `edges[].id` | string | yes | no |  |  |
+| `edges[].source` | string | yes | no |  |  |
+| `edges[].target` | string | yes | no |  |  |
+| `edges[].source_handle` | string | no | no |  |  |
+| `edges[].target_handle` | string | no | no |  |  |
+| `edges[].label` | string | no | no |  |  |
+| `edges[].condition` | string | no | no |  |  |
+| `edges[].connection_type` | string | no | no | enum: `"flow"`, `"ai_chat_model"`, `"ai_tool"`, `"ai_mcp_server"`, `"ai_output_parser"`, `"ai_persona"`, `"ai_knowledge_base"`, `"ai_operator"`, `"agent_graph_workers"` |  |
+
+### `GET /agents` — List agents
+
+- **operationId:** `agents.list`
+- **SDK method:** `agents.list`
+- **Auth:** Bearer API key, scope `workflows:read`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** yes (GET)
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+**Parameters**
+
+_None documented._
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `data` | object[] | yes | no |  |  |
+| `data[].id` | string | yes | no |  |  |
+| `data[].name` | string | yes | no |  |  |
+| `data[].description` | string | yes | no |  |  |
+| `data[].status` | string | yes | no |  | draft \| testing \| published \| archived \| paused |
+| `data[].channels` | string[] | yes | no |  | The channels this agent serves — one per trigger node on its canvas (e.g. ["web", "whatsapp", "phone"]). Empty for a webhook- or schedule-only agent. |
+| `data[].active_version` | integer | yes | no | ≥ 0 |  |
+| `data[].node_count` | integer | yes | no | ≥ 0 |  |
+| `data[].created_at` | string | yes | no | format: date-time |  |
+| `data[].updated_at` | string | yes | no | format: date-time |  |
+
+### `GET /agents/{id}` — Get an agent (with its graph)
+
+- **operationId:** `agents.get`
+- **SDK method:** `agents.get`
+- **Auth:** Bearer API key, scope `workflows:read`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** yes (GET)
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| path | `id` | string | yes |  | Resource id. |
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `name` | string | yes | no |  |  |
+| `description` | string | yes | no |  |  |
+| `status` | string | yes | no |  | draft \| testing \| published \| archived \| paused |
+| `channels` | string[] | yes | no |  | The channels this agent serves — one per trigger node on its canvas (e.g. ["web", "whatsapp", "phone"]). Empty for a webhook- or schedule-only agent. |
+| `active_version` | integer | yes | no | ≥ 0 |  |
+| `node_count` | integer | yes | no | ≥ 0 |  |
+| `created_at` | string | yes | no | format: date-time |  |
+| `updated_at` | string | yes | no | format: date-time |  |
+| `nodes` | object[] | yes | no |  |  |
+| `nodes[].id` | string | yes | no |  |  |
+| `nodes[].type` | string | yes | no | enum: `"trigger"`, `"ai_agent"`, `"agent_graph"`, `"logic"`, `"human"`, `"entity"`, `"data"`, `"analytics"`, `"http_request"`, `"document_processing"`, `"kb_indexer"`, `"workflow"`, `"render_view"`, `"agent_step"`, `"tool_step"`, `"sticky_note"`, `"chat_model"`, `"workflow_tool"`, `"pdf_creator"`, `"csv_creator"`, `"report_creator"`, `"email_sender"`, `"sms_sender"`, `"whatsapp_sender"`, `"human_escalator"`, `"phone_caller"`, `"http_requester"`, `"document_uploader"`, `"google_sheets_appender"`, `"google_sheets_read"`, `"db_query"`, `"mysql_query"`, `"mongodb_query"`, `"document_extractor"`, `"mcp_server"`, `"persona"`, `"knowledge_base"`, `"operator"` |  |
+| `nodes[].label` | string | yes | no |  |  |
+| `nodes[].position` | object | yes | no |  |  |
+| `nodes[].position.x` | number | yes | no |  |  |
+| `nodes[].position.y` | number | yes | no |  |  |
+| `nodes[].config` | map<string, any> | yes | no |  |  |
+| `nodes[].description` | string | no | no |  |  |
+| `nodes[].retry` | object | no | no |  |  |
+| `nodes[].retry.max_attempts` | integer | yes | no | ≥ 1; ≤ 10 |  |
+| `nodes[].retry.backoff_ms` | integer | yes | no | ≥ 0 |  |
+| `nodes[].timeout_ms` | integer | no | no | > 0 |  |
+| `nodes[].notes` | string | no | no |  |  |
+| `nodes[].pinned_input` | any | no | no |  |  |
+| `edges` | object[] | yes | no |  |  |
+| `edges[].id` | string | yes | no |  |  |
+| `edges[].source` | string | yes | no |  |  |
+| `edges[].target` | string | yes | no |  |  |
+| `edges[].source_handle` | string | no | no |  |  |
+| `edges[].target_handle` | string | no | no |  |  |
+| `edges[].label` | string | no | no |  |  |
+| `edges[].condition` | string | no | no |  |  |
+| `edges[].connection_type` | string | no | no | enum: `"flow"`, `"ai_chat_model"`, `"ai_tool"`, `"ai_mcp_server"`, `"ai_output_parser"`, `"ai_persona"`, `"ai_knowledge_base"`, `"ai_operator"`, `"agent_graph_workers"` |  |
+
+### `PATCH /agents/{id}` — Update an agent
+
+- **operationId:** `agents.update`
+- **SDK method:** `agents.update`
+- **Auth:** Bearer API key, scope `workflows:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in)
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Edit fields or replace the node/edge graph (attach tools/MCP/KB by including their sub-nodes + typed edges).
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| path | `id` | string | yes |  | Resource id. |
+
+**Request body** (`application/json`, required: yes)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | string | no | no | minLength 1; maxLength 200 |  |
+| `description` | string | no | no |  |  |
+| `channels` | string[] | no | no | minItems 1 |  |
+| `nodes` | object[] | no | no |  |  |
+| `nodes[].id` | string | yes | no |  |  |
+| `nodes[].type` | string | yes | no | enum: `"trigger"`, `"ai_agent"`, `"agent_graph"`, `"logic"`, `"human"`, `"entity"`, `"data"`, `"analytics"`, `"http_request"`, `"document_processing"`, `"kb_indexer"`, `"workflow"`, `"render_view"`, `"agent_step"`, `"tool_step"`, `"sticky_note"`, `"chat_model"`, `"workflow_tool"`, `"pdf_creator"`, `"csv_creator"`, `"report_creator"`, `"email_sender"`, `"sms_sender"`, `"whatsapp_sender"`, `"human_escalator"`, `"phone_caller"`, `"http_requester"`, `"document_uploader"`, `"google_sheets_appender"`, `"google_sheets_read"`, `"db_query"`, `"mysql_query"`, `"mongodb_query"`, `"document_extractor"`, `"mcp_server"`, `"persona"`, `"knowledge_base"`, `"operator"` |  |
+| `nodes[].label` | string | yes | no |  |  |
+| `nodes[].position` | object | yes | no |  |  |
+| `nodes[].position.x` | number | yes | no |  |  |
+| `nodes[].position.y` | number | yes | no |  |  |
+| `nodes[].config` | map<string, any> | yes | no |  |  |
+| `nodes[].description` | string | no | no |  |  |
+| `nodes[].retry` | object | no | no |  |  |
+| `nodes[].retry.max_attempts` | integer | yes | no | ≥ 1; ≤ 10 |  |
+| `nodes[].retry.backoff_ms` | integer | yes | no | ≥ 0 |  |
+| `nodes[].timeout_ms` | integer | no | no | > 0 |  |
+| `nodes[].notes` | string | no | no |  |  |
+| `nodes[].pinned_input` | any | no | no |  |  |
+| `edges` | object[] | no | no |  |  |
+| `edges[].id` | string | yes | no |  |  |
+| `edges[].source` | string | yes | no |  |  |
+| `edges[].target` | string | yes | no |  |  |
+| `edges[].source_handle` | string | no | no |  |  |
+| `edges[].target_handle` | string | no | no |  |  |
+| `edges[].label` | string | no | no |  |  |
+| `edges[].condition` | string | no | no |  |  |
+| `edges[].connection_type` | string | no | no | enum: `"flow"`, `"ai_chat_model"`, `"ai_tool"`, `"ai_mcp_server"`, `"ai_output_parser"`, `"ai_persona"`, `"ai_knowledge_base"`, `"ai_operator"`, `"agent_graph_workers"` |  |
+| `status` | string | no | no | enum: `"draft"`, `"testing"`, `"archived"`, `"paused"` | Non-live state transitions only; publish is a separate operation. |
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `name` | string | yes | no |  |  |
+| `description` | string | yes | no |  |  |
+| `status` | string | yes | no |  | draft \| testing \| published \| archived \| paused |
+| `channels` | string[] | yes | no |  | The channels this agent serves — one per trigger node on its canvas (e.g. ["web", "whatsapp", "phone"]). Empty for a webhook- or schedule-only agent. |
+| `active_version` | integer | yes | no | ≥ 0 |  |
+| `node_count` | integer | yes | no | ≥ 0 |  |
+| `created_at` | string | yes | no | format: date-time |  |
+| `updated_at` | string | yes | no | format: date-time |  |
+| `nodes` | object[] | yes | no |  |  |
+| `nodes[].id` | string | yes | no |  |  |
+| `nodes[].type` | string | yes | no | enum: `"trigger"`, `"ai_agent"`, `"agent_graph"`, `"logic"`, `"human"`, `"entity"`, `"data"`, `"analytics"`, `"http_request"`, `"document_processing"`, `"kb_indexer"`, `"workflow"`, `"render_view"`, `"agent_step"`, `"tool_step"`, `"sticky_note"`, `"chat_model"`, `"workflow_tool"`, `"pdf_creator"`, `"csv_creator"`, `"report_creator"`, `"email_sender"`, `"sms_sender"`, `"whatsapp_sender"`, `"human_escalator"`, `"phone_caller"`, `"http_requester"`, `"document_uploader"`, `"google_sheets_appender"`, `"google_sheets_read"`, `"db_query"`, `"mysql_query"`, `"mongodb_query"`, `"document_extractor"`, `"mcp_server"`, `"persona"`, `"knowledge_base"`, `"operator"` |  |
+| `nodes[].label` | string | yes | no |  |  |
+| `nodes[].position` | object | yes | no |  |  |
+| `nodes[].position.x` | number | yes | no |  |  |
+| `nodes[].position.y` | number | yes | no |  |  |
+| `nodes[].config` | map<string, any> | yes | no |  |  |
+| `nodes[].description` | string | no | no |  |  |
+| `nodes[].retry` | object | no | no |  |  |
+| `nodes[].retry.max_attempts` | integer | yes | no | ≥ 1; ≤ 10 |  |
+| `nodes[].retry.backoff_ms` | integer | yes | no | ≥ 0 |  |
+| `nodes[].timeout_ms` | integer | no | no | > 0 |  |
+| `nodes[].notes` | string | no | no |  |  |
+| `nodes[].pinned_input` | any | no | no |  |  |
+| `edges` | object[] | yes | no |  |  |
+| `edges[].id` | string | yes | no |  |  |
+| `edges[].source` | string | yes | no |  |  |
+| `edges[].target` | string | yes | no |  |  |
+| `edges[].source_handle` | string | no | no |  |  |
+| `edges[].target_handle` | string | no | no |  |  |
+| `edges[].label` | string | no | no |  |  |
+| `edges[].condition` | string | no | no |  |  |
+| `edges[].connection_type` | string | no | no | enum: `"flow"`, `"ai_chat_model"`, `"ai_tool"`, `"ai_mcp_server"`, `"ai_output_parser"`, `"ai_persona"`, `"ai_knowledge_base"`, `"ai_operator"`, `"agent_graph_workers"` |  |
+
+### `POST /agents/{id}/publish` — Publish an agent
+
+- **operationId:** `agents.publish`
+- **SDK method:** `agents.publish`
+- **Auth:** Bearer API key, scope `workflows:publish`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — each publish snapshots a new version
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Runs the structural + runtime publish gates, snapshots a version, and takes the agent live. Returns 422 with node-tagged validation errors if not publishable.
+
+**Parameters**
+
+| In | Name | Type | Required | Constraints | Description |
+|---|---|---|---|---|---|
+| path | `id` | string | yes |  | Resource id. |
+
+**Request body:** none.
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `status` | string | yes | no | enum: `"published"` |  |
+| `version` | integer | yes | no | > 0 |  |
+
+### `POST /agents/from-spec` — Create an agent from a compact spec
+
+- **operationId:** `agents.create_from_spec`
+- **SDK method:** `agents.createFromSpec`
+- **Auth:** Bearer API key, scope `workflows:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — would create a second agent
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Assembles the canonical agent graph (trigger + ai_agent + persona + chat_model) from a small spec — no need to construct nodes/edges. Optionally publishes.
+
+**Parameters**
+
+_None documented._
+
+**Request body** (`application/json`, required: yes)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `name` | string | yes | no | minLength 1; maxLength 200 | Agent display name. |
+| `persona_name` | string | yes | no | minLength 1 | Persona first name, e.g. "Maya". |
+| `role` | string | yes | no | minLength 1 | Persona role line, e.g. "Support Agent". |
+| `tone` | string | no | no |  | professional \| friendly \| empathetic \| casual \| authoritative |
+| `system_prompt` | string | yes | no | minLength 1 | The full system prompt (persona behavior + skills). |
+| `greeting` | string | no | no |  |  |
+| `channel` | string | no | no | enum: `"whatsapp"`, `"phone"`, `"web"`, `"sms"`, `"email"`, `"mobile"`, `"heartbeat"` | Channel the agent serves (defaults to web). |
+| `chat_model_credential_id` | string | no | no |  | Tenant Gemini/OpenAI credential id for the agent LLM. |
+| `publish` | boolean | no | no |  | Publish immediately (requires the workflows:publish scope). |
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `name` | string | yes | no |  |  |
+| `status` | string | yes | no |  | draft \| published |
+| `channels` | string[] | yes | no |  |  |
+| `node_count` | integer | yes | no | ≥ 0 |  |
+| `published` | boolean | yes | no |  |  |
+| `version` | integer | no | no | > 0 |  |
+
+### `POST /agents/generate` — Generate an agent from a description
+
+- **operationId:** `agents.generate`
+- **SDK method:** `agents.generate`
+- **Auth:** Bearer API key, scope `workflows:write`
+- **Pagination:** None documented — single response.
+- **SDK auto-retry:** no (opt-in) — would create a second agent and re-run the LLM
+- **Statuses:** 200 Success, 401 Error, 403 Error, 404 Error
+
+> Describe the agent in plain language; the platform's System LLM drafts the persona + system prompt, then builds the canonical graph. Optionally publishes. Requires a configured System LLM.
+
+**Parameters**
+
+_None documented._
+
+**Request body** (`application/json`, required: yes)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `prompt` | string | yes | no | minLength 1 | Plain-language description of the agent to build. |
+| `channel` | string | no | no | enum: `"whatsapp"`, `"phone"`, `"web"`, `"sms"`, `"email"`, `"mobile"`, `"heartbeat"` |  |
+| `chat_model_credential_id` | string | no | no |  |  |
+| `publish` | boolean | no | no |  |  |
+
+**Response 200** (`application/json`)
+
+| Field | Type | Required | Nullable | Constraints | Description |
+|---|---|---|---|---|---|
+| `id` | string | yes | no |  |  |
+| `name` | string | yes | no |  |  |
+| `status` | string | yes | no |  | draft \| published |
+| `channels` | string[] | yes | no |  |  |
+| `node_count` | integer | yes | no | ≥ 0 |  |
+| `published` | boolean | yes | no |  |  |
+| `version` | integer | no | no | > 0 |  |

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { APIResource, InvalidRequestError, type RequestOptions } from "../src/index.js";
+import { APIResource, InvalidRequestError, ValidationError, type RequestOptions } from "../src/index.js";
 import { createTestClient, json, jsonBody, queryOf } from "./helpers.js";
 
 describe("conversations.getTranscript", () => {
@@ -153,6 +153,23 @@ describe("calls.getRecordings", () => {
     );
     await client.calls.getRecordings("conv_1");
     expect(requests[0]!.url.pathname).toBe("/api/v1/conversations/conv_1/recordings");
+  });
+});
+
+describe("agents.publish", () => {
+  test("an unpublishable agent surfaces the 422 details as ValidationError", async () => {
+    const body = {
+      error: "not_publishable",
+      message: "Agent failed publish gates",
+      // Shape not documented; whatever the server sends is preserved verbatim.
+      details: [{ node_id: "n2", issue: "missing chat_model" }],
+    };
+    const { client, requests } = createTestClient(() => json(body, 422));
+    const error = (await client.agents.publish("agt_1").catch((e: unknown) => e)) as ValidationError;
+    expect(error).toBeInstanceOf(ValidationError);
+    expect(error.code).toBe("not_publishable");
+    expect(error.body).toEqual(body);
+    expect(requests[0]!.body).toBeUndefined();
   });
 });
 

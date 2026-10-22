@@ -237,6 +237,12 @@ describe("retries", () => {
     ["knowledgeBase.moveFile", (c) => c.knowledgeBase.moveFile("f1", { folder_id: null })],
     ["credentials.register", (c) => c.credentials.register({ name: "n", type: "custom", config: {} })],
     ["mcpServers.update", (c) => c.mcpServers.update("m1", { name: "n" })],
+    ["agents.create", (c) => c.agents.create({ name: "a", channels: ["web"] })],
+    ["agents.update", (c) => c.agents.update("a1", { name: "b" })],
+    ["agents.publish", (c) => c.agents.publish("a1")],
+    ["agents.createFromSpec", (c) =>
+      c.agents.createFromSpec({ name: "a", persona_name: "M", role: "r", system_prompt: "p" })],
+    ["agents.generate", (c) => c.agents.generate({ prompt: "p" })],
   ])("never auto-retries non-idempotent %s", async (_, run) => {
     const { client, requests } = createTestClient(() => json({ error: "unavailable" }, 503));
     await expect(withFakeTimers(() => run(client))).rejects.toBeInstanceOf(InternalServerError);

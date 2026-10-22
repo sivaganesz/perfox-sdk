@@ -28,7 +28,11 @@ const IN_SCOPE_TAGS = [
   "Billing",
   "Outbound",
   "Messages",
+  "Agents",
 ];
+
+/** Operations the spec documents under IN_SCOPE_TAGS (guards against silent spec changes). */
+const EXPECTED_OPERATION_COUNT = 51;
 
 interface SchemaNode {
   type?: string;
@@ -102,6 +106,37 @@ const MCP_FIELDS = {
   auth_secret: "s3cret",
   config: { rate_limit: 10, timeout_ms: 5000, cache_ttl_s: 0 },
   oversized_result_policy: "trim" as const,
+};
+
+/** A two-node graph that populates every documented node and edge field. */
+const AGENT_GRAPH = {
+  nodes: [
+    {
+      id: "n1",
+      type: "trigger" as const,
+      label: "Web trigger",
+      position: { x: 0, y: 0 },
+      config: { channel: "web" },
+      description: "Entry point",
+      retry: { max_attempts: 3, backoff_ms: 500 },
+      timeout_ms: 30_000,
+      notes: "Fires on every new chat",
+      pinned_input: { sample: true },
+    },
+    { id: "n2", type: "ai_agent" as const, label: "Agent", position: { x: 200, y: 0 }, config: {} },
+  ],
+  edges: [
+    {
+      id: "e1",
+      source: "n1",
+      target: "n2",
+      source_handle: "out",
+      target_handle: "in",
+      label: "next",
+      condition: "true",
+      connection_type: "flow" as const,
+    },
+  ],
 };
 
 type Invocation = { method: string; run: (c: PerfoxClient) => Promise<unknown> };
@@ -314,6 +349,59 @@ const INVOCATIONS: Record<string, Invocation[]> = {
     { method: "messages.iterate", run: (c) => c.messages.iterate({ status: "failed" }).toArray() },
   ],
   "messages.get": [{ method: "messages.get", run: (c) => c.messages.get(ID) }],
+
+  // Agents
+  "agents.create": [
+    {
+      method: "agents.create",
+      run: (c) => c.agents.create({ name: "Support", description: "Helps customers", channels: ["web"], ...AGENT_GRAPH }),
+    },
+  ],
+  "agents.list": [{ method: "agents.list", run: (c) => c.agents.list() }],
+  "agents.get": [{ method: "agents.get", run: (c) => c.agents.get(ID) }],
+  "agents.update": [
+    {
+      method: "agents.update",
+      run: (c) =>
+        c.agents.update(ID, {
+          name: "Support v2",
+          description: "Updated",
+          channels: ["web", "whatsapp"],
+          status: "testing",
+          ...AGENT_GRAPH,
+        }),
+    },
+  ],
+  "agents.publish": [{ method: "agents.publish", run: (c) => c.agents.publish(ID) }],
+  "agents.create_from_spec": [
+    {
+      method: "agents.createFromSpec",
+      run: (c) =>
+        c.agents.createFromSpec({
+          name: "Maya",
+          persona_name: "Maya",
+          role: "Support Agent",
+          tone: "friendly",
+          system_prompt: "You help customers with orders.",
+          greeting: "Hi, I'm Maya!",
+          channel: "whatsapp",
+          chat_model_credential_id: "cred_llm",
+          publish: false,
+        }),
+    },
+  ],
+  "agents.generate": [
+    {
+      method: "agents.generate",
+      run: (c) =>
+        c.agents.generate({
+          prompt: "A friendly agent that tracks orders",
+          channel: "web",
+          chat_model_credential_id: "cred_llm",
+          publish: true,
+        }),
+    },
+  ],
 };
 
 // ---------------------------------------------------------------- helpers
@@ -364,7 +452,7 @@ function successStatus(op: SpecOperation): number {
 
 describe("spec coverage", () => {
   test("snapshot has the expected in-scope operations", () => {
-    expect(inScopeOps).toHaveLength(44);
+    expect(inScopeOps).toHaveLength(EXPECTED_OPERATION_COUNT);
   });
 
   test("every in-scope operation has SDK invocations, and nothing else does", () => {
@@ -384,6 +472,7 @@ describe("spec coverage", () => {
       "billing",
       "outbound",
       "messages",
+      "agents",
     ] as const;
     const publicMethods = resources.flatMap((name) => {
       const proto = Object.getPrototypeOf(client[name]) as object;

@@ -26,11 +26,11 @@ Status legend: ✅ done · 🚧 in progress · ⏳ pending
 | 8 | Billing | `billing` | 2 | 2 | 0 | ✅ |
 | 9 | Outbound | `outbound` | 1 | 1 | 0 | ✅ |
 | 10 | Messages | `messages` | 3 | 3 | 0 | ✅ |
-| 11 | Agents | `agents` | 7 | 0 | 7 | ⏳ |
+| 11 | Agents | `agents` | 7 | 7 | 0 | ✅ |
 | 12 | Support | `support` | 4 | 0 | 4 | ⏳ |
 | 13 | Templates | `templates` | 2 | 0 | 2 | ⏳ |
 | 14 | Webhooks | `webhooks` | 5 | 0 | 5 | ⏳ |
-| | **Total** | | **62** | **44** | **18** | **71%** |
+| | **Total** | | **62** | **51** | **11** | **82%** |
 
 ## 2. Full inventory
 
@@ -130,17 +130,17 @@ Status legend: ✅ done · 🚧 in progress · ⏳ pending
 | GET | `/messages` | `messages.list` | `messages.list` / `iterate` | ✅ | ✅ |
 | GET | `/messages/{id}` | `messages.get` | `messages.get` | ✅ | ✅ |
 
-### Agents (0/7)
+### Agents (7/7)
 
-| Method | Path | operationId | SDK method (planned) | Status | Tests |
+| Method | Path | operationId | SDK method | Status | Tests |
 |---|---|---|---|---|---|
-| POST | `/agents` | `agents.create` | `agents.create` | ⏳ | — |
-| GET | `/agents` | `agents.list` | `agents.list` | ⏳ | — |
-| GET | `/agents/{id}` | `agents.get` | `agents.get` | ⏳ | — |
-| PATCH | `/agents/{id}` | `agents.update` | `agents.update` | ⏳ | — |
-| POST | `/agents/{id}/publish` | `agents.publish` | `agents.publish` | ⏳ | — |
-| POST | `/agents/from-spec` | `agents.create_from_spec` | `agents.createFromSpec` | ⏳ | — |
-| POST | `/agents/generate` | `agents.generate` | `agents.generate` | ⏳ | — |
+| POST | `/agents` | `agents.create` | `agents.create` | ✅ | ✅ |
+| GET | `/agents` | `agents.list` | `agents.list` | ✅ | ✅ |
+| GET | `/agents/{id}` | `agents.get` | `agents.get` | ✅ | ✅ |
+| PATCH | `/agents/{id}` | `agents.update` | `agents.update` | ✅ | ✅ |
+| POST | `/agents/{id}/publish` | `agents.publish` | `agents.publish` | ✅ | ✅ |
+| POST | `/agents/from-spec` | `agents.create_from_spec` | `agents.createFromSpec` | ✅ | ✅ |
+| POST | `/agents/generate` | `agents.generate` | `agents.generate` | ✅ | ✅ |
 
 ### Support (0/4)
 
@@ -212,7 +212,8 @@ Gaps in the first 10 categories are listed in [`implementation-plan.md`](./imple
 |---|---|---|---|---|
 | 2026-10-07 | `master` | `b5aac74` | v0.1.0: 10 categories, 44 operations. | 292 passed |
 | 2026-10-22 | `feat/remaining-api-categories` | `20b60c2` | Analysis approved; branch and this tracker created. | — |
-| 2026-10-22 | `feat/remaining-api-categories` | _API changes_ | Spec snapshot refreshed; `ended` status and `app_platform_key` credential type added. | 292 passed |
+| 2026-10-22 | `feat/remaining-api-categories` | `b4014d1` | Spec snapshot refreshed; `ended` status and `app_platform_key` credential type added. | 292 passed |
+| 2026-10-22 | `feat/remaining-api-categories` | _Agents_ | Agents: 7 operations (`agents.*`). | 326 passed |
 
 ## 6. How to update
 

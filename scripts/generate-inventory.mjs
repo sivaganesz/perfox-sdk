@@ -27,6 +27,7 @@ export const IN_SCOPE_TAGS = [
   "Billing",
   "Outbound",
   "Messages",
+  "Agents",
 ];
 
 /** operationId -> SDK mapping. pagination: none | cursor | after | page-meta. */
@@ -75,6 +76,13 @@ const SDK_MAPPING = {
   "messages.create": { sdk: "messages.create", pagination: "none", retry: "no (opt-in) — would send twice" },
   "messages.list": { sdk: "messages.list / messages.iterate", pagination: "cursor", retry: "yes (GET)" },
   "messages.get": { sdk: "messages.get", pagination: "none", retry: "yes (GET)" },
+  "agents.create": { sdk: "agents.create", pagination: "none", retry: "no (opt-in) — would create a second agent" },
+  "agents.list": { sdk: "agents.list", pagination: "none", retry: "yes (GET)" },
+  "agents.get": { sdk: "agents.get", pagination: "none", retry: "yes (GET)" },
+  "agents.update": { sdk: "agents.update", pagination: "none", retry: "no (opt-in)" },
+  "agents.publish": { sdk: "agents.publish", pagination: "none", retry: "no (opt-in) — each publish snapshots a new version" },
+  "agents.create_from_spec": { sdk: "agents.createFromSpec", pagination: "none", retry: "no (opt-in) — would create a second agent" },
+  "agents.generate": { sdk: "agents.generate", pagination: "none", retry: "no (opt-in) — would create a second agent and re-run the LLM" },
 };
 
 const PAGINATION_TEXT = {
@@ -181,14 +189,19 @@ ops.forEach(({ path, method, op }, i) => {
   md += `| ${i + 1} | ${op.tags[0]} | ${method} | \`${path}\` | \`${op.operationId}\` | \`${scope}\` | \`${m.sdk}\` | ${m.pagination} | ${m.retry} |\n`;
 });
 
-md += `\n**Total in-scope operations: ${ops.length}.** Out-of-scope tags present in the spec and intentionally NOT implemented: ${[
+const notCovered = [
   ...new Set(
     Object.values(spec.paths)
       .flatMap((i) => Object.values(i))
       .map((o) => o.tags?.[0])
       .filter((t) => t && !IN_SCOPE_TAGS.includes(t)),
   ),
-].join(", ")}.\n`;
+];
+md += `\n**Total in-scope operations: ${ops.length}.** ${
+  notCovered.length
+    ? `Tags present in the spec but not yet implemented: ${notCovered.join(", ")}.`
+    : "Every tag in the spec is covered."
+}\n`;
 
 let currentTag = "";
 for (const { path, method, op } of ops) {

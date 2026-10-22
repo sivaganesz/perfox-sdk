@@ -261,6 +261,36 @@ describe("Messages", () => {
   });
 });
 
+describe("Agents", () => {
+  test("agents.create", () => {
+    expectTypeOf<Matches<SDK.AgentCreateParams, Body<"agents.create">>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<SDK.Agent, Res<"agents.create", 201>>>().toEqualTypeOf<true>();
+  });
+  test("agents.list", () => {
+    expectTypeOf<Matches<SDK.AgentListResponse, Res<"agents.list", 200>>>().toEqualTypeOf<true>();
+  });
+  test("agents.get", () => {
+    expectTypeOf<Matches<SDK.Agent, Res<"agents.get", 200>>>().toEqualTypeOf<true>();
+  });
+  test("agents.update", () => {
+    expectTypeOf<Matches<SDK.AgentUpdateParams, Body<"agents.update">>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<SDK.Agent, Res<"agents.update", 200>>>().toEqualTypeOf<true>();
+  });
+  test("agents.publish", () => {
+    expectTypeOf<Matches<SDK.AgentPublishResponse, Res<"agents.publish", 200>>>().toEqualTypeOf<true>();
+  });
+  test("agents.create_from_spec", () => {
+    expectTypeOf<
+      Matches<SDK.AgentCreateFromSpecParams, Body<"agents.create_from_spec">>
+    >().toEqualTypeOf<true>();
+    expectTypeOf<Matches<SDK.AgentBuildResult, Res<"agents.create_from_spec", 200>>>().toEqualTypeOf<true>();
+  });
+  test("agents.generate", () => {
+    expectTypeOf<Matches<SDK.AgentGenerateParams, Body<"agents.generate">>>().toEqualTypeOf<true>();
+    expectTypeOf<Matches<SDK.AgentBuildResult, Res<"agents.generate", 200>>>().toEqualTypeOf<true>();
+  });
+});
+
 describe("checker sanity (negative controls)", () => {
   type Spec = Res<"customers.get", 200>;
   test("detects a missing optional field", () => {
